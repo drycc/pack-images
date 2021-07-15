@@ -7,10 +7,7 @@ ARG pack_uid=1000
 ARG pack_gid=1000
 
 RUN groupadd drycc --gid ${pack_gid} && \
-  useradd drycc -u ${pack_uid} -g ${pack_gid} -s /bin/bash -m && \
-  chown drycc:drycc /usr/src /var/lib
-
-RUN apt-get update && apt-get install autoconf -y
+  useradd drycc -u ${pack_uid} -g ${pack_gid} -s /bin/bash -m
 
 ARG STACK
 LABEL io.buildpacks.stack.id="${STACK}"

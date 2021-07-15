@@ -9,7 +9,7 @@ ADD rootfs /
 RUN groupadd drycc --gid ${pack_gid} && \
   useradd drycc -u ${pack_uid} -g ${pack_gid} -s /bin/bash -m
 RUN mkdir /app && \
-  chown drycc:drycc /app /usr/src /var/lib
+  chown drycc:drycc /app
 RUN chmod +x /usr/local/bin/* && \
   install-tools.sh
 

@@ -9,7 +9,7 @@ platform:
 steps:
 - name: test
   image: docker.io/drycc/go-dev
-  pull: if-not-exists
+  pull: always
   privileged: true
   commands:
   - STACK=20 make test-style
@@ -29,9 +29,9 @@ steps:
   - name: image_registries
     path: /etc/containers/registries.conf
 
-- name: publish-pack
+- name: publish pack
   image: docker.io/drycc/go-dev
-  pull: if-not-exists
+  pull: always
   privileged: true
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
@@ -74,9 +74,9 @@ platform:
   os: linux
 
 steps:
-- name: publish
+- name: publish pack
   image: docker.io/drycc/go-dev
-  pull: if-not-exists
+  pull: always
   privileged: true
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
@@ -105,20 +105,22 @@ type: docker
 name: manifest-pack
 
 steps:
-- name: generate manifest
+- name: generate pack manifest
   image: docker.io/library/alpine
-  pull: if-not-exists
   commands:
-  - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" .drone/manifest.tmpl
+  - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" .drone/manifest-run.tmpl
   - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" .drone/manifest-build.tmpl
+  - sed -i "s/20/$${STACK}/g" .drone/manifest-run.tmpl
+  - sed -i "s/20/$${STACK}/g" .drone/manifest-build.tmpl
   environment:
+    STACK: 20
     DRYCC_REGISTRY:
       from_secret: drycc_registry
 
-- name: publish-20
+- name: publish run
   image: plugins/manifest
   settings:
-    spec: .drone/manifest.tmpl
+    spec: .drone/manifest-run.tmpl
     username:
       from_secret: docker_username
     password:
@@ -130,7 +132,7 @@ steps:
     DRYCC_REGISTRY:
       from_secret: drycc_registry
 
-- name: publish-20-build
+- name: publish build
   image: plugins/manifest
   settings:
     spec: .drone/manifest-build.tmpl
@@ -157,19 +159,20 @@ depends_on:
 ---
 kind: pipeline
 type: docker
-name: linux-buildpacks-arm64
+name: linux-buildpacks-amd64
 
 platform:
   arch: amd64
   os: linux
 
 steps:
-- name: publish
+- name: publish amd64 buildpack
   image: docker.io/drycc/go-dev
-  pull: if-not-exists
+  pull: always
   privileged: true
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
+  - docker system service --time 0 unix:///var/run/docker.sock &
   - STACK=20 VERSION=20-linux-amd64 make publish-buildpack
   environment:
     DEV_REGISTRY:
@@ -202,12 +205,13 @@ platform:
   os: linux
 
 steps:
-- name: publish
+- name: publish arm64 buildpack
   image: docker.io/drycc/go-dev
-  pull: if-not-exists
+  pull: always
   privileged: true
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
+  - docker system service --time 0 unix:///var/run/docker.sock &
   - STACK=20 VERSION=20-linux-arm64 make publish-buildpack
   environment:
     DEV_REGISTRY:
@@ -236,17 +240,19 @@ type: docker
 name: manifest-buildpacks
 
 steps:
-- name: generate manifest
+- name: generate buildpacks manifest
   image: docker.io/library/alpine
-  pull: if-not-exists
   commands:
   - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" .drone/manifest-buildpacks.tmpl
-  - sed -i "s/docker.io/${DRYCC_REGISTRY}/g" builder.toml
+  - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" builder.toml
+  - sed -i "s/20/$${STACK}/g" .drone/manifest-buildpacks.tmpl
+  - sed -i "s/20/$${STACK}/g" builder.toml
   environment:
+    STACK: 20
     DRYCC_REGISTRY:
       from_secret: drycc_registry
 
-- name: publish-20-buildpacks
+- name: publish buildpack
   image: plugins/manifest
   settings:
     spec: .drone/manifest-buildpacks.tmpl

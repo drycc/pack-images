@@ -7,10 +7,10 @@ with [Cloud Native Buildpacks'](https://buildpacks.io)
 [`pack`](https://github.com/buildpacks/pack) command.
 
 * [drycc/pack:20](https://hub.docker.com/r/drycc/pack/tags/) - A CNB
-  compatible run image based on drycc:20
+  compatible run image based on drycc/pack:20
 * [drycc/pack:20-build](https://hub.docker.com/r/drycc/pack/tags/) - A CNB
-  compatible build image based on drycc:20-build
+  compatible build image based on drycc/pack:20-build
 
 ## Usage
 
-`pack build myapp --builder drycc/buildpacks:18`
+`pack build myapp --builder drycc/buildpacks:20`

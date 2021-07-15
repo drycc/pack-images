@@ -1,12 +1,12 @@
-image: docker.io/drycc/pack:${STACK}-build
+image: docker.io/drycc/pack:20-build
 manifests:
   -
-    image: docker.io/drycc/pack:${STACK}-linux-amd64-build
+    image: docker.io/drycc/pack:20-linux-amd64-build
     platform:
       architecture: amd64
       os: linux
   -
-    image: docker.io/drycc/pack:${STACK}-linux-arm64-build
+    image: docker.io/drycc/pack:20-linux-arm64-build
     platform:
       architecture: arm64
       os: linux

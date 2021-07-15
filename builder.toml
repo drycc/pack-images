@@ -1,8 +1,7 @@
 description = "Base builder for 20 stack, based on ubuntu:20.04 base image"
 
 [lifecycle]
-# version = "0.11.3"
-uri = "https://kubernetes-release.uucin.com/drycc/lifecycle-v0.11.3%2Blinux.x86-64.tgz"
+version = "0.11.3"
 
 [[buildpacks]]
   id = "drycc/ruby"
@@ -14,7 +13,6 @@ uri = "https://kubernetes-release.uucin.com/drycc/lifecycle-v0.11.3%2Blinux.x86-
 id = "drycc/ruby"
 version = "0.0.1"
 
-
 [[buildpacks]]
   id = "drycc/python"
   version = "0.0.1"
@@ -24,7 +22,6 @@ version = "0.0.1"
 [[order.group]]
 id = "drycc/python"
 version = "0.0.1"
-
 
 [[buildpacks]]
   id = "drycc/go"
@@ -36,6 +33,7 @@ version = "0.0.1"
 id = "drycc/go"
 version = "0.0.1"
 
+
 [[buildpacks]]
   id = "drycc/nodejs"
   version = "0.0.1"
@@ -45,6 +43,7 @@ version = "0.0.1"
 [[order.group]]
 id = "drycc/nodejs"
 version = "0.0.1"
+
 
 [[buildpacks]]
   id = "drycc/rust"
@@ -78,5 +77,5 @@ version = "0.0.1"
 
 [stack]
 id = "drycc-20"
-build-image = "registry.uucin.com/lijianguo/pack:20-build"
-run-image = "registry.uucin.com/lijianguo/pack:20"
+build-image = "docker.io/drycc/pack:20-build"
+run-image = "docker.io/drycc/pack:20"
