@@ -1,0 +1,13 @@
+# Buildpack API version
+api = "0.2"
+
+# Buildpack ID and metadata
+[buildpack]
+id = "drycc/ruby"
+version = "0.0.1"
+name = "Ruby Buildpack"
+homepage = "https://github.com/drycc/pack-images/tree/main/buildpacks/ruby"
+
+# Stacks that the buildpack will work with
+[[stacks]]
+id = "drycc-20"

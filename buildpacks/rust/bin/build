@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+echo "---> Rust Buildpack"
+
+# 1. GET ARGS
+layers_dir=$1
+plan_path=$3
+
+# 2. DOWNLOAD Rust
+rust_layer_dir="${layers_dir}/rust"
+mkdir -p "${rust_layer_dir}"
+
+export RUSTUP_HOME="${rust_layer_dir}/multirust"
+# Our cargo installation.  We implicitly trust Rustup and Cargo
+# to do the right thing when new versions are released.
+export CARGO_HOME="${rust_layer_dir}"
+
+# Default build flags to pass to `cargo build`.
+RUST_CARGO_BUILD_FLAGS="--release"
+
+# determine rust version provided during detection
+rust_version=$(< "${plan_path}" yj -t | jq -r '.entries[] | select(.name == "rust") | .version')
+remote_rust_version="not found"
+if [[ -f "${rust_layer_dir}.toml" ]]; then
+    remote_rust_version=$(< "${rust_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
+fi
+
+if [[ "${rust_version}" == "${remote_rust_version}" ]] ; then
+  echo "---> Reusing rustup, checking for new releases of Rust $rust_version channel"
+  "${rust_layer_dir}"/bin/rustup self update
+  "${rust_layer_dir}"/bin/rustup update "$rust_version"
+  "${rust_layer_dir}"/bin/rustup default "$rust_version"
+else
+  # Standard paranoia.
+  set -eu
+  echo "---> Downloading rustup"
+  curl https://sh.rustup.rs -sSf > rustup.sh
+  chmod u+x rustup.sh
+  echo "---> Using rustup to install Rust channel ${rust_version}"
+  ./rustup.sh -y --default-toolchain "${rust_version}"
+  rm rustup.sh
+  mv "${CARGO_HOME}/env" "${CARGO_HOME}/bin"
+  if [ ! -x "${CARGO_HOME}/bin/rustc" ]; then
+    echo "failed: Cannot find Rust binaries at ${rust_layer_dir}"
+    exit 1
+  fi
+  cat > "${rust_layer_dir}.toml" <<EOL
+cache = true
+launch = true
+metadata = "${rust_version}"
+EOL
+fi
+
+# 3. MAKE RUST AVAILABLE TO THIS SCRIPT
+export PATH="${CARGO_HOME}/bin:${PATH}"
+export CARGO_TARGET_DIR="${CARGO_HOME}/target"
+
+echo "-----> Building application using Cargo"
+if [ -s .cargo/config ]; then
+    cp -f .cargo/config "${CARGO_HOME}/config"
+fi
+rm -rf target/
+cargo build $RUST_CARGO_BUILD_FLAGS
+mkdir -p target/release
+find "$CARGO_TARGET_DIR/release" -maxdepth 1 -type f -executable -exec cp -a -t target/release {} \;
+
+generate-launch.sh "${layers_dir}"

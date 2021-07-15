@@ -1,0 +1,13 @@
+# Buildpack API version
+api = "0.2"
+
+# Buildpack ID and metadata
+[buildpack]
+id = "drycc/python"
+version = "0.0.1"
+name = "Python Buildpack"
+homepage = "https://github.com/drycc/pack-images/tree/main/buildpacks/python"
+
+# Stacks that the buildpack will work with
+[[stacks]]
+id = "drycc-20"

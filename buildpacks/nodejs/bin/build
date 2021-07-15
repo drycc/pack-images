@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+echo "---> Nodejs Buildpack"
+
+# 1. GET ARGS
+layers_dir=$1
+plan_path=$3
+
+# 2. DOWNLOAD nodejs
+node_layer_dir="${layers_dir}/node"
+mkdir -p "${node_layer_dir}"
+arch=$(dpkg --print-architecture)  # amd64 arm64
+if [[ ${arch} == "amd64" ]]; then
+    arch="x64"
+fi
+# determine nodejs version provided during detection
+node_version=$(< "${plan_path}" yj -t | jq -r '.entries[] | select(.name == "nodejs") | .version')
+node_name=node-v${node_version}-linux-${arch}
+remote_node_version='not found'
+if [[ -f "${node_layer_dir}.toml" ]]; then
+    remote_node_version=$(< "${node_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
+fi
+if [[ "${node_version}" == "${remote_node_version}" ]] ; then
+  echo "---> Reusing Node v${node_version}"
+else
+  echo "---> Downloading and extracting Node v${node_version}"
+  node_url="https://nodejs.org/dist/v${node_version}/${node_name}.tar.xz"
+  wget -q -O - "${node_url}" | tar -xJf - --strip-components=1 -C "${node_layer_dir}"
+  cat > "${node_layer_dir}.toml" <<EOL
+cache = true
+launch = true
+metadata = "${node_version}"
+EOL
+fi
+
+# 3. MAKE node npm AVAILABLE TO THIS SCRIPT
+export PATH="${node_layer_dir}/bin:${PATH}"
+
+
+node_modules_layer_dir="${node_layer_dir}/node_modules"
+mkdir -p "${node_modules_layer_dir}"
+# Compares previous package.json checksum to the current package.json
+local_package_checksum=$(sha256sum package.json | cut -d ' ' -f 1 || echo 'not found')
+remote_package_checksum='not found'
+if [[ -f "${node_modules_layer_dir}.toml" ]]; then
+    remote_package_checksum=$(< "${node_modules_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
+fi
+
+if [[ -f package.json && "${local_package_checksum}" == "${remote_package_checksum}" ]] ; then
+  echo "---> Reusing package.json"
+  cp -r "${node_modules_layer_dir}" "./node_modules"
+else
+  echo "---> Installing package.json with npm install."
+  rm "${node_modules_layer_dir}" -rf
+  npm install
+  if [[ -d "${node_modules_layer_dir}" ]]; then
+      rm "${node_modules_layer_dir:?}/*" -rf
+			cp -r node_modules/. "${node_modules_layer_dir}/"
+  fi
+  cat > "${node_modules_layer_dir}.toml" <<EOL
+cache = true
+launch = true
+metadata = "${local_package_checksum}"
+EOL
+fi
+
+json_get_key() {
+	local file="$1"
+	local key="$2"
+
+	if test -f "$file"; then
+		jq -c -M --raw-output "$key // \"\"" <"$file" || return 1
+	else
+		echo ""
+	fi
+}
+
+build_script=$(json_get_key "package.json" ".scripts.build")
+if [[ $build_script ]]; then
+  npm run build
+fi
+
+generate-launch.sh "${layers_dir}"

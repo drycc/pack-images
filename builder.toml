@@ -1,0 +1,82 @@
+description = "Base builder for 20 stack, based on ubuntu:20.04 base image"
+
+[lifecycle]
+# version = "0.11.3"
+uri = "https://kubernetes-release.uucin.com/drycc/lifecycle-v0.11.3%2Blinux.x86-64.tgz"
+
+[[buildpacks]]
+  id = "drycc/ruby"
+  version = "0.0.1"
+  uri = "./buildpacks/ruby"
+
+[[order]]
+[[order.group]]
+id = "drycc/ruby"
+version = "0.0.1"
+
+
+[[buildpacks]]
+  id = "drycc/python"
+  version = "0.0.1"
+  uri = "./buildpacks/python"
+
+[[order]]
+[[order.group]]
+id = "drycc/python"
+version = "0.0.1"
+
+
+[[buildpacks]]
+  id = "drycc/go"
+  version = "0.0.1"
+  uri = "./buildpacks/go"
+
+[[order]]
+[[order.group]]
+id = "drycc/go"
+version = "0.0.1"
+
+[[buildpacks]]
+  id = "drycc/nodejs"
+  version = "0.0.1"
+  uri = "./buildpacks/nodejs"
+
+[[order]]
+[[order.group]]
+id = "drycc/nodejs"
+version = "0.0.1"
+
+[[buildpacks]]
+  id = "drycc/rust"
+  version = "0.0.1"
+  uri = "./buildpacks/rust"
+
+[[order]]
+[[order.group]]
+id = "drycc/rust"
+version = "0.0.1"
+
+[[buildpacks]]
+  id = "drycc/java"
+  version = "0.0.1"
+  uri = "./buildpacks/java"
+
+[[order]]
+[[order.group]]
+id = "drycc/java"
+version = "0.0.1"
+
+[[buildpacks]]
+  id = "drycc/php"
+  version = "0.0.1"
+  uri = "./buildpacks/php"
+
+[[order]]
+[[order.group]]
+id = "drycc/php"
+version = "0.0.1"
+
+[stack]
+id = "drycc-20"
+build-image = "registry.uucin.com/lijianguo/pack:20-build"
+run-image = "registry.uucin.com/lijianguo/pack:20"

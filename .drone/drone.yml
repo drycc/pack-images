@@ -1,0 +1,276 @@
+kind: pipeline
+type: docker
+name: linux-pack-amd64
+
+platform:
+  arch: amd64
+  os: linux
+
+steps:
+- name: test
+  image: docker.io/drycc/go-dev
+  pull: if-not-exists
+  privileged: true
+  commands:
+  - STACK=20 make test-style
+  environment:
+    DEV_REGISTRY:
+      from_secret: dev_registry
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+    CODECOV_TOKEN:
+      from_secret: codecov_token
+  when:
+    event:
+    - push
+    - tag
+    - pull_request
+  volumes:
+  - name: image_registries
+    path: /etc/containers/registries.conf
+
+- name: publish-pack
+  image: docker.io/drycc/go-dev
+  pull: if-not-exists
+  privileged: true
+  commands:
+  - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
+  - STACK=20 VERSION=20-linux-amd64 make publish-pack
+  environment:
+    DEV_REGISTRY:
+      from_secret: dev_registry
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+  when:
+    event:
+    - push
+    - tag
+  volumes:
+  - name: image_registries
+    path: /etc/containers/registries.conf
+
+trigger:
+  event:
+  - push
+  - tag
+  - pull_request
+
+volumes:
+- name: image_registries
+  host:
+    path: /etc/containers/registries.conf
+
+---
+kind: pipeline
+type: docker
+name: linux-pack-arm64
+
+platform:
+  arch: arm64
+  os: linux
+
+steps:
+- name: publish
+  image: docker.io/drycc/go-dev
+  pull: if-not-exists
+  privileged: true
+  commands:
+  - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
+  - STACK=20 VERSION=20-linux-arm64 make publish-pack
+  environment:
+    DEV_REGISTRY:
+      from_secret: dev_registry
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+  volumes:
+  - name: image_registries
+    path: /etc/containers/registries.conf
+
+trigger:
+  event:
+  - push
+  - tag
+
+---
+kind: pipeline
+type: docker
+name: manifest-pack
+
+steps:
+- name: generate manifest
+  image: docker.io/library/alpine
+  pull: if-not-exists
+  commands:
+  - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" .drone/manifest.tmpl
+  - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" .drone/manifest-build.tmpl
+  environment:
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+
+- name: publish-20
+  image: plugins/manifest
+  settings:
+    spec: .drone/manifest.tmpl
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+  environment:
+    STACK: 20
+    DEV_REGISTRY:
+      from_secret: dev_registry
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+
+- name: publish-20-build
+  image: plugins/manifest
+  settings:
+    spec: .drone/manifest-build.tmpl
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+  environment:
+    STACK: 20
+    DEV_REGISTRY:
+      from_secret: dev_registry
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+
+trigger:
+  event:
+  - push
+  - tag
+
+depends_on:
+- linux-pack-amd64
+- linux-pack-arm64
+
+---
+kind: pipeline
+type: docker
+name: linux-buildpacks-arm64
+
+platform:
+  arch: amd64
+  os: linux
+
+steps:
+- name: publish
+  image: docker.io/drycc/go-dev
+  pull: if-not-exists
+  privileged: true
+  commands:
+  - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
+  - STACK=20 VERSION=20-linux-amd64 make publish-buildpack
+  environment:
+    DEV_REGISTRY:
+      from_secret: dev_registry
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+  volumes:
+  - name: image_registries
+    path: /etc/containers/registries.conf
+
+trigger:
+  event:
+  - push
+  - tag
+
+depends_on:
+- manifest-pack
+
+---
+kind: pipeline
+type: docker
+name: linux-buildpacks-arm64
+
+platform:
+  arch: arm64
+  os: linux
+
+steps:
+- name: publish
+  image: docker.io/drycc/go-dev
+  pull: if-not-exists
+  privileged: true
+  commands:
+  - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
+  - STACK=20 VERSION=20-linux-arm64 make publish-buildpack
+  environment:
+    DEV_REGISTRY:
+      from_secret: dev_registry
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+  volumes:
+  - name: image_registries
+    path: /etc/containers/registries.conf
+
+trigger:
+  event:
+  - push
+  - tag
+
+depends_on:
+- manifest-pack
+
+---
+kind: pipeline
+type: docker
+name: manifest-buildpacks
+
+steps:
+- name: generate manifest
+  image: docker.io/library/alpine
+  pull: if-not-exists
+  commands:
+  - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" .drone/manifest-buildpacks.tmpl
+  - sed -i "s/docker.io/${DRYCC_REGISTRY}/g" builder.toml
+  environment:
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+
+- name: publish-20-buildpacks
+  image: plugins/manifest
+  settings:
+    spec: .drone/manifest-buildpacks.tmpl
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+  environment:
+    STACK: 20
+    DEV_REGISTRY:
+      from_secret: dev_registry
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+
+trigger:
+  event:
+  - push
+  - tag
+
+depends_on:
+- linux-buildpacks-amd64
+- linux-buildpacks-arm64
+
+volumes:
+- name: image_registries
+  host:
+    path: /etc/containers/registries.conf

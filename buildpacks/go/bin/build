@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+echo "---> Go Buildpack"
+
+# 1. GET ARGS
+layers_dir=$1
+plan_path=$3
+
+# 2. DOWNLOAD go
+go_layer_dir="${layers_dir}/go"
+mkdir -p "${go_layer_dir}"
+arch=$(dpkg --print-architecture)  # amd64 arm64
+# determine go version provided during detection
+go_version=$(< "${plan_path}" yj -t | jq -r '.entries[] | select(.name == "go") | .version')
+remote_go_version='not found'
+if [[ -f "${go_layer_dir}.toml" ]]; then
+    remote_go_version=$(< "${go_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
+fi
+if [[ "${go_version}" == "${remote_go_version}" ]] ; then
+  echo "---> Reusing go"
+else
+  echo "---> Downloading and extracting go ${go_version}"
+  go_url=https://golang.org/dl/go${go_version}.linux-${arch}.tar.gz
+  wget -q -O - "${go_url}" | tar -xzf - -C "${go_layer_dir}"
+  cat > "${go_layer_dir}.toml" <<EOL
+cache = true
+launch = true
+metadata = "${go_version}"
+EOL
+fi
+
+go_cache_layer_dir="${layers_dir}/go_cache"
+# 3. MAKE go AVAILABLE TO THIS SCRIPT
+export PATH="${go_layer_dir}/go/bin:${PATH}"
+export GOPATH="${go_cache_layer_dir}"
+
+# Compares previous go.mod checksum to the current go.mod
+local_mod_checksum=$(sha256sum go.mod | cut -d ' ' -f 1 || echo 'not found')
+remote_mod_checksum='not found'
+if [[ -f "${go_cache_layer_dir}.toml" ]]; then
+    remote_mod_checksum=$(< "${go_cache_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
+fi
+mkdir -p "${go_cache_layer_dir}"
+
+if [[ -f go.mod && "${local_mod_checksum}" == "${remote_mod_checksum}" ]] ; then
+  echo "---> Reusing go.mod"
+else
+  echo "---> Installing go.mod with go mod vendor"
+  rm "${go_cache_layer_dir}/pkg" -rf
+  go mod download
+  cat > "${go_cache_layer_dir}.toml" <<EOL
+cache = true
+launch = true
+metadata = "${local_mod_checksum}"
+EOL
+fi
+
+go mod vendor
+go build -o main -v .
+generate-launch.sh "${layers_dir}"

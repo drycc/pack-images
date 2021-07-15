@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+# 1. CHECK IF APPLICABLE 
+if [[ ! -f pom.xml ]] && [[ ! -f gradlew ]] ; then
+    exit 100
+fi
+
+# 2. GET ARGS
+plan_path=$2
+
+# 3. GET CONFIGURATION
+version=8
+if [[ -f .jdk-version ]]; then
+    version=$(< .jdk-version tr -d '[:space:]')
+fi
+# 4. DECLARE DEPENDENCIES
+cat >> "${plan_path}" <<EOL
+# Buildpack provides this dependency
+#
+# NOTE: The dependency is provided during the 'build' process.
+#
+[[provides]]
+name = "jdk"
+
+# Buildpack requires this dependency
+#
+# NOTE: Everything aside from 'name' is simply additional information that the providing buildpack can use to resolve
+#       the dependency.
+#
+[[requires]]
+name = "jdk"
+version = "${version}"
+EOL

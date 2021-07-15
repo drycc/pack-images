@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# 4. MAKE GRADLE CACHE LAYER
+
+gradle_build() {
+  gradle_layer_dir="${layers_dir}/gradle"
+
+  if [[ ! -d ${gradle_layer_dir} ]]; then
+    mkdir -p ${gradle_layer_dir}
+    echo "cache = true" > ${gradle_layer_dir}.toml
+  fi
+  ln -s ${gradle_layer_dir} $HOME/.gradle
+
+  # 5. RUN BUILD
+  echo "---> Running Gradle Wrapper"
+  ./gradlew clean build -x test --no-daemon
+}
+
+

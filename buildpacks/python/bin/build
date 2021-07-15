@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+echo "---> Python Buildpack"
+
+# 1. GET ARGS
+layers_dir=$1
+plan_path=$3
+arch=$(dpkg --print-architecture)  # amd64 arm64
+# 2. DOWNLOAD PYTHON
+python_layer_dir="${layers_dir}/python"
+mkdir -p "${python_layer_dir}"
+
+# determine python version provided during detection
+python_version=$(< "${plan_path}" yj -t | jq -r '.entries[] | select(.name == "python") | .version')
+remote_python_version="not found"
+if [[ -f "${python_layer_dir}.toml" ]]; then
+    remote_python_version=$(< "${python_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
+fi
+
+if [[ "${python_version}" == "${remote_python_version}" ]] ; then
+  echo "---> Reusing python"
+else
+  echo "---> Downloading and extracting Python ${python_version}"
+  python_url="https://buildpacks.drycc.cc/python/${CNB_STACK_ID}/python-${python_version}-${arch}.tar.gz"
+  wget -q -O - "${python_url}" | tar -xzf - -C "${python_layer_dir}"
+  cat > "${python_layer_dir}.toml" <<EOL
+cache = true
+launch = true
+metadata = "${python_version}"
+EOL
+# shellcheck disable=SC2006
+for file in `(ls "${python_layer_dir}/bin/")`
+do
+  if [ "${file}" == 'pip' ]; then
+    sed -ir 's/\#\!\/usr\/local\/bin\/python/\#\!\/usr\/bin\/env\ python/g' "${python_layer_dir}/bin/${file}"
+  fi
+done
+if [ ! -s "${python_layer_dir}"/profile.d/python.sh ]; then
+  mkdir "${python_layer_dir}"/profile.d
+  cat > "${python_layer_dir}"/profile.d/python.sh <<EOL
+export PATH="${python_layer_dir}/bin:${PATH}"
+export C_INCLUDE_PATH="${python_layer_dir}/include:${C_INCLUDE_PATH}"
+export CPLUS_INCLUDE_PATH="${python_layer_dir}/include:${C_INCLUDE_PATH}"
+export LIBRARY_PATH="${python_layer_dir}/lib:${LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH="${python_layer_dir}/lib:${LD_LIBRARY_PATH}"
+export PKG_CONFIG_PATH="${python_layer_dir}/lib/pkg-config:${PKG_CONFIG_PATH}"
+EOL
+fi
+fi
+
+rm -f "${python_layer_dir}"/profile.d/pip.sh
+if [ "${PIP_INDEX_URL}" ]; then
+  tee >> "${python_layer_dir}"/profile.d/pip.sh << EOF
+python -m pip  config set global.index-url "${PIP_INDEX_URL}"
+EOF
+fi
+if [ "${PIP_EXTRA_INDEX_URL}" ]; then
+  tee >> "${python_layer_dir}"/profile.d/pip.sh << EOF
+python -m pip  config set global.extra-index-url "${PIP_INDEX_URL}"
+EOF
+fi
+
+# 3. MAKE python and pip AVAILABLE TO THIS SCRIPT
+export PATH="${python_layer_dir}/bin:${PATH}"
+export C_INCLUDE_PATH="${python_layer_dir}/include:${C_INCLUDE_PATH}"
+export CPLUS_INCLUDE_PATH="${python_layer_dir}/include:${C_INCLUDE_PATH}"
+export LIBRARY_PATH="${python_layer_dir}/lib:${LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH="${python_layer_dir}/lib:${LD_LIBRARY_PATH}"
+export PKG_CONFIG_PATH="${python_layer_dir}/lib/pkg-config:${PKG_CONFIG_PATH}"
+
+# Compares previous requirements checksum to the current requirements
+requirements_layer_dir="${layers_dir}/requirements"
+local_requirements_checksum=$(sha256sum requirements.txt | cut -d ' ' -f 1 || echo 'not found')
+remote_requirements_checksum='not found'
+if [[ -f "${requirements_layer_dir}.toml" ]]; then
+    remote_requirements_checksum=$(< "${requirements_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
+fi
+mkdir -p "${requirements_layer_dir}"
+
+if [ "${PIP_INDEX_URL}" ]; then
+  echo "---> Setting pip index-url with ${PIP_INDEX_URL}"
+  python -m pip  config set global.index-url "${PIP_INDEX_URL}"
+fi
+if [ "${PIP_EXTRA_INDEX_URL}" ]; then
+  echo "---> Setting pip extra-index-url with ${PIP_EXTRA_INDEX_URL}"
+  python -m pip  config set global.extra-index-url "${PIP_EXTRA_INDEX_URL}"
+fi
+
+if [[ -f requirements.txt && "${local_requirements_checksum}" == "${remote_requirements_checksum}" ]] ; then
+  echo "---> Reusing requirements"
+else
+  echo "---> Installing requirements with pip"
+  python -m pip install -r requirements.txt \
+  --exists-action=w --src="${python_layer_dir}"/src \
+  --disable-pip-version-check --no-cache-dir
+  cat > "${requirements_layer_dir}.toml" <<EOL
+cache = true
+launch = true
+metadata = "${local_requirements_checksum}"
+EOL
+fi
+
+generate-launch.sh "${layers_dir}"

@@ -1,0 +1,13 @@
+# Buildpack API version
+api = "0.2"
+
+# Buildpack ID and metadata
+[buildpack]
+id = "drycc/rust"
+version = "0.0.1"
+name = "Rust Buildpack"
+homepage = "https://github.com/drycc/pack-images/tree/main/buildpacks/rust"
+
+# Stacks that the buildpack will work with
+[[stacks]]
+id = "drycc-20"
