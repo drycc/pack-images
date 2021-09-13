@@ -29,7 +29,7 @@ if [[ "${php_version}" == "${remote_php_version}" ]] ; then
   echo "---> Reusing php"
 else
   echo "---> Downloading and extracting php ${php_version} ${arch}"
-  php_url="https://buildpacks.drycc.cc/php/${CNB_STACK_ID}/php-${php_version}-${arch}.tar.gz"
+  php_url="buildpacks.drycc.cc/php/${CNB_STACK_ID}/php-${php_version}-${arch}.tar.gz"
   wget -q -O - "${php_url}" | tar -xzf - -C "${php_layer_dir}"
   rm -f "php-${php_version}-${arch}.tar.gz"
   cp "${php_layer_dir}/sbin/php-fpm" "${php_layer_dir}/bin"

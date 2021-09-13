@@ -22,7 +22,7 @@ if [[ "${python_version}" == "${remote_python_version}" ]] ; then
   echo "---> Reusing python"
 else
   echo "---> Downloading and extracting Python ${python_version}"
-  python_url="https://buildpacks.drycc.cc/python/${CNB_STACK_ID}/python-${python_version}-${arch}.tar.gz"
+  python_url="buildpacks.drycc.cc/python/${CNB_STACK_ID}/python-${python_version}-${arch}.tar.gz"
   wget -q -O - "${python_url}" | tar -xzf - -C "${python_layer_dir}"
   cat > "${python_layer_dir}.toml" <<EOL
 cache = true

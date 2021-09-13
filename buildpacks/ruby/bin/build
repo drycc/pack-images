@@ -24,7 +24,7 @@ if [[ "${ruby_version}" == "${remote_ruby_version}" ]] ; then
   echo "---> Reusing ruby"
 else
   echo "---> Downloading and extracting Ruby ${ruby_version}"
-  ruby_url="https://buildpacks.drycc.cc/ruby/${CNB_STACK_ID}/ruby-${ruby_version}-${arch}.tar.gz"
+  ruby_url="buildpacks.drycc.cc/ruby/${CNB_STACK_ID}/ruby-${ruby_version}-${arch}.tar.gz"
   wget -q -O - "${ruby_url}" | tar -xzf - -C "${ruby_layer_dir}"
   cat > "${ruby_layer_dir}.toml" <<EOL
 cache = true
