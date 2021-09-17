@@ -28,6 +28,7 @@ else
   wget -q -O - "${ruby_url}" | tar -xzf - -C "${ruby_layer_dir}"
   cat > "${ruby_layer_dir}.toml" <<EOL
 cache = true
+build = true
 launch = true
 metadata = "${ruby_version}"
 EOL
@@ -83,6 +84,7 @@ else
   echo "---> Installing gems"
   cat > "${bundler_layer_dir}.toml" <<EOL
 cache = true
+build = true
 launch = true
 metadata = "${local_bundler_checksum}"
 EOL

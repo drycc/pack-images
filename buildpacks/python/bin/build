@@ -26,6 +26,7 @@ else
   wget -q -O - "${python_url}" | tar -xzf - -C "${python_layer_dir}"
   cat > "${python_layer_dir}.toml" <<EOL
 cache = true
+build = true
 launch = true
 metadata = "${python_version}"
 EOL
@@ -96,6 +97,7 @@ else
   --disable-pip-version-check --no-cache-dir
   cat > "${requirements_layer_dir}.toml" <<EOL
 cache = true
+build = true
 launch = true
 metadata = "${local_requirements_checksum}"
 EOL

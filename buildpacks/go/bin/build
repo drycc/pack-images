@@ -25,6 +25,7 @@ else
   wget -q -O - "${go_url}" | tar -xzf - -C "${go_layer_dir}"
   cat > "${go_layer_dir}.toml" <<EOL
 cache = true
+build = true
 launch = true
 metadata = "${go_version}"
 EOL
@@ -51,6 +52,7 @@ else
   go mod download
   cat > "${go_cache_layer_dir}.toml" <<EOL
 cache = true
+build = true
 launch = true
 metadata = "${local_mod_checksum}"
 EOL

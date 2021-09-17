@@ -38,6 +38,7 @@ else
   mv "${php_layer_dir}/bin/composer.phar" "${php_layer_dir}/bin/composer"
   cat > "${php_layer_dir}.toml" <<EOL
 cache = true
+build = true
 launch = true
 metadata = "${php_version}"
 EOL
@@ -90,6 +91,7 @@ else
   ext_install
   cat > "${extensions_layer_dir}.toml"<<EOL
 cache = true
+build = true
 launch = true
 metadata = "${local_extensions_checksum}"
 EOL
@@ -119,6 +121,7 @@ else
   fi
   cat > "${vendor_layer_dir}.toml"<<EOL
 cache = true
+build = true
 launch = true
 metadata = "${local_composer_checksum}"
 EOL
@@ -131,6 +134,7 @@ cp -r /etc/nginx/* "${nginx_layer_dir}"
 cp "${bp_dir}/config/nginx/base.conf" "${nginx_layer_dir}/nginx-php.conf"
 cat > "${nginx_layer_dir}.toml"<<EOL
 cache = true
+build = true
 launch = true
 EOL
 

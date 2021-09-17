@@ -173,6 +173,7 @@ steps:
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
   - docker system service --time 0 unix:///var/run/docker.sock &
+  - sleep 9
   - STACK=20 VERSION=20-linux-amd64 make publish-buildpack
   environment:
     DEV_REGISTRY:
@@ -212,6 +213,7 @@ steps:
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
   - docker system service --time 0 unix:///var/run/docker.sock &
+  - sleep 9
   - STACK=20 VERSION=20-linux-arm64 make publish-buildpack
   environment:
     DEV_REGISTRY:

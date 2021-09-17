@@ -29,6 +29,7 @@ else
   wget -q -O - "${node_url}" | tar -xJf - --strip-components=1 -C "${node_layer_dir}"
   cat > "${node_layer_dir}.toml" <<EOL
 cache = true
+build = true
 launch = true
 metadata = "${node_version}"
 EOL
@@ -60,6 +61,7 @@ else
   fi
   cat > "${node_modules_layer_dir}.toml" <<EOL
 cache = true
+build = true
 launch = true
 metadata = "${local_package_checksum}"
 EOL

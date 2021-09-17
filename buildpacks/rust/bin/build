@@ -47,6 +47,7 @@ else
   fi
   cat > "${rust_layer_dir}.toml" <<EOL
 cache = true
+build = true
 launch = true
 metadata = "${rust_version}"
 EOL
