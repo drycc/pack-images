@@ -1,7 +1,7 @@
 description = "Base builder for 20 stack, based on ubuntu:20.04 base image"
 
 [lifecycle]
-version = "0.11.3"
+uri = "{LIFECYCLE_URL}"
 
 [[buildpacks]]
   id = "drycc/ruby"
@@ -77,5 +77,5 @@ version = "0.0.1"
 
 [stack]
 id = "drycc-20"
-build-image = "docker.io/drycc/pack:20-build"
-run-image = "docker.io/drycc/pack:20"
+run-image = "{STACK_RUN_IMAGE}"
+build-image = "{STACK_BUILD_IMAGE}"
