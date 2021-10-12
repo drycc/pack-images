@@ -26,33 +26,30 @@ urls_extension_install() {
   ext_tar=$(echo "${ext_url}" | awk -F "/" '{print $NF}')
   ext=$(echo "${ext_tar}" | awk -F "-" '{print $1}')
   echo "---> Installing extension ${ext_url}"
-  curl -fsSL "${ext_url}" -o "${ext_tar}" \
-    && mkdir -p /tmp/"${ext}" \
-    && tar -xf "${ext_tar}"  -C /tmp/"${ext}" --strip-components=1 \
-    && rm "${ext_tar}"  \
-    && php-ext-configure /tmp/"${ext}" --enable-"${ext}" --with-php-config="${php_layer_dir}"/bin/php-config \
-    && INSTALL_ROOT="${php_layer_dir}" php-ext-install --ini-name "${php_layer_dir}"/config/php.ini  /tmp/"${ext}" \
-    && rm -r /tmp/"${ext}"
+  curl -fsSL "${ext_url}" -o "${ext_tar}" &&
+    mkdir -p /tmp/"${ext}" &&
+    tar -xf "${ext_tar}" -C /tmp/"${ext}" --strip-components=1 &&
+    rm "${ext_tar}" &&
+    php-ext-configure /tmp/"${ext}" --enable-"${ext}" --with-php-config="${php_layer_dir}"/bin/php-config &&
+    INSTALL_ROOT="${php_layer_dir}" php-ext-install --ini-name "${php_layer_dir}"/config/php.ini /tmp/"${ext}" &&
+    rm -r /tmp/"${ext}"
 }
 
-ext_install(){
+ext_install() {
   builtin_length=$(jq '.builtin|length' extensions.json)
-  for (( i=0; i < builtin_length; i++ ))
-  do
+  for ((i = 0; i < builtin_length; i++)); do
     ext=$(jq .builtin[$i] extensions.json)
     builtin_extension_install "${ext}"
   done
 
   pecl_length=$(jq '.pecl|length' extensions.json)
-  for (( i=0; i < pecl_length; i++ ))
-  do
+  for ((i = 0; i < pecl_length; i++)); do
     ext=$(jq .pecl[$i] extensions.json)
     pecl_extension_install "${ext}"
   done
 
   urls_length=$(jq '.urls|length' extensions.json)
-  for (( i=0; i < urls_length; i++ ))
-  do
+  for ((i = 0; i < urls_length; i++)); do
     ext=$(jq .urls[$i] extensions.json)
     urls_extension_install "${ext}"
   done

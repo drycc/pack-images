@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-# 1. CHECK IF APPLICABLE 
+# 1. CHECK IF APPLICABLE
 if [[ ! -f Gemfile ]]; then
-   exit 100
+    exit 100
 fi
 
 # 2. GET ARGS
 plan_path=$2
 
 # 3. GET CONFIGURATION
-version=3.0.1
+version=3.0.2
 if [[ -f .ruby-version ]]; then
-    version=$(< .ruby-version tr -d '[:space:]')
+    version=$(tr <.ruby-version -d '[:space:]')
 fi
 
 # 4. DECLARE DEPENDENCIES
-cat >> "${plan_path}" <<EOL
+cat >>"${plan_path}" <<EOL
 # Buildpack provides this dependency
 #
 # NOTE: The dependency is provided during the 'build' process.

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck source=/dev/null
+. generate-layer.sh
 set -eo pipefail
 
 echo "---> Go Buildpack"
@@ -10,20 +12,20 @@ plan_path=$3
 # 2. DOWNLOAD go
 go_layer_dir="${layers_dir}/go"
 mkdir -p "${go_layer_dir}"
-arch=$(dpkg --print-architecture)  # amd64 arm64
+arch=$(dpkg --print-architecture) # amd64 arm64
 # determine go version provided during detection
-go_version=$(< "${plan_path}" yj -t | jq -r '.entries[] | select(.name == "go") | .version')
+go_version=$(yj <"${plan_path}" -t | jq -r '.entries[] | select(.name == "go") | .version')
 remote_go_version='not found'
 if [[ -f "${go_layer_dir}.toml" ]]; then
-    remote_go_version=$(< "${go_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
+  remote_go_version=$(yj <"${go_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
 fi
-if [[ "${go_version}" == "${remote_go_version}" ]] ; then
+if [[ "${go_version}" == "${remote_go_version}" ]]; then
   echo "---> Reusing go"
 else
   echo "---> Downloading and extracting go ${go_version}"
   go_url=https://golang.org/dl/go${go_version}.linux-${arch}.tar.gz
   wget -q -O - "${go_url}" | tar -xzf - -C "${go_layer_dir}"
-  cat > "${go_layer_dir}.toml" <<EOL
+  cat >"${go_layer_dir}.toml" <<EOL
 cache = true
 build = true
 launch = true
@@ -40,17 +42,17 @@ export GOPATH="${go_cache_layer_dir}"
 local_mod_checksum=$(sha256sum go.mod | cut -d ' ' -f 1 || echo 'not found')
 remote_mod_checksum='not found'
 if [[ -f "${go_cache_layer_dir}.toml" ]]; then
-    remote_mod_checksum=$(< "${go_cache_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
+  remote_mod_checksum=$(yj <"${go_cache_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
 fi
 mkdir -p "${go_cache_layer_dir}"
 
-if [[ -f go.mod && "${local_mod_checksum}" == "${remote_mod_checksum}" ]] ; then
+if [[ -f go.mod && "${local_mod_checksum}" == "${remote_mod_checksum}" ]]; then
   echo "---> Reusing go.mod"
 else
   echo "---> Installing go.mod with go mod vendor"
   rm "${go_cache_layer_dir}/pkg" -rf
   go mod download
-  cat > "${go_cache_layer_dir}.toml" <<EOL
+  cat >"${go_cache_layer_dir}.toml" <<EOL
 cache = true
 build = true
 launch = true

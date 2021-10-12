@@ -1,11 +1,11 @@
 #! /bin/sh
 
-SED="/usr/bin/sed"
+SED="/bin/sed"
 prefix="/layers/drycc_php/php"
 datarootdir="/layers/drycc_php/php"
 exec_prefix="${prefix}"
-version="8.0.8"
-vernum="80008"
+version="$($datarootdir/bin/php $datarootdir/bin/php-version.php)"
+vernum="$($datarootdir/bin/php $datarootdir/bin/php-vernum.php)"
 include_dir="${prefix}/include/php"
 includes="-I$include_dir -I$include_dir/main -I$include_dir/TSRM -I$include_dir/Zend -I$include_dir/ext -I$include_dir/ext/date/lib"
 ldflags=" -Wl,-O1 -pie"
@@ -17,7 +17,7 @@ program_suffix=""
 exe_extension=""
 php_cli_binary=NONE
 php_cgi_binary=NONE
-configure_options=" '--build=x86_64-linux-gnu' '--with-config-file-path=/usr/local/etc/php' '--with-config-file-scan-dir=/usr/local/etc/php/conf.d' '--enable-option-checking=fatal' '--with-mhash' '--with-pic' '--enable-ftp' '--enable-mbstring' '--enable-mysqlnd' '--with-password-argon2' '--with-sodium=shared' '--with-pdo-sqlite=/usr' '--with-sqlite3=/usr' '--with-curl' '--with-libedit' '--with-openssl' '--with-zlib' '--with-pear' '--with-libdir=lib/x86_64-linux-gnu' '--enable-fpm' '--with-fpm-user=www-data' '--with-fpm-group=www-data' '--disable-cgi' 'build_alias=x86_64-linux-gnu'"
+configure_options=" '--build=x86_64-linux-gnu' '--with-config-file-path=/usr/local/etc/php' '--with-config-file-scan-dir=/usr/local/etc/php/conf.d' '--enable-option-checking=fatal' '--with-mhash' '--with-pic' '--enable-ftp' '--enable-mbstring' '--enable-mysqlnd' '--with-password-argon2' '--with-sodium=shared' '--with-pdo-sqlite=/usr' '--with-sqlite3=/usr' '--with-curl' '--with-libedit' '--with-openssl' '--with-zlib' '--with-pear' '--with-libdir=lib/x86_64-linux-gnu' '--enable-fpm' '--with-fpm-user=drycc' '--with-fpm-group=drycc' '--disable-cgi' 'build_alias=x86_64-linux-gnu'"
 php_sapis=" cli fpm phpdbg"
 ini_dir="/usr/local/etc/php/conf.d"
 ini_path="/usr/local/etc/php"

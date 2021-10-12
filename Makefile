@@ -22,7 +22,7 @@ SHELL=/bin/bash -o pipefail
 pack:
 	@docker build --pull -f Dockerfile.build \
 	  --build-arg STACK=drycc-${STACK} \
-	  --build-arg BASE_IMAGE=${DRYCC_REGISTRY}/drycc/stack-images:${STACK}-build \
+	  --build-arg BASE_IMAGE=${DRYCC_REGISTRY}/drycc/stack-images:${STACK} \
 	  -t ${DRYCC_REGISTRY}/drycc/pack:${VERSION}-build .
 	@docker build --pull -f Dockerfile.run \
 	  --build-arg STACK=drycc-${STACK} \

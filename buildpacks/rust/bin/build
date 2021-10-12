@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck source=/dev/null
+. generate-layer.sh
 set -eo pipefail
 
 echo "---> Rust Buildpack"
@@ -20,13 +22,13 @@ export CARGO_HOME="${rust_layer_dir}"
 RUST_CARGO_BUILD_FLAGS="--release"
 
 # determine rust version provided during detection
-rust_version=$(< "${plan_path}" yj -t | jq -r '.entries[] | select(.name == "rust") | .version')
+rust_version=$(yj <"${plan_path}" -t | jq -r '.entries[] | select(.name == "rust") | .version')
 remote_rust_version="not found"
 if [[ -f "${rust_layer_dir}.toml" ]]; then
-    remote_rust_version=$(< "${rust_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
+  remote_rust_version=$(yj <"${rust_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
 fi
 
-if [[ "${rust_version}" == "${remote_rust_version}" ]] ; then
+if [[ "${rust_version}" == "${remote_rust_version}" ]]; then
   echo "---> Reusing rustup, checking for new releases of Rust $rust_version channel"
   "${rust_layer_dir}"/bin/rustup self update
   "${rust_layer_dir}"/bin/rustup update "$rust_version"
@@ -35,7 +37,7 @@ else
   # Standard paranoia.
   set -eu
   echo "---> Downloading rustup"
-  curl https://sh.rustup.rs -sSf > rustup.sh
+  curl https://sh.rustup.rs -sSf >rustup.sh
   chmod u+x rustup.sh
   echo "---> Using rustup to install Rust channel ${rust_version}"
   ./rustup.sh -y --default-toolchain "${rust_version}"
@@ -45,7 +47,7 @@ else
     echo "failed: Cannot find Rust binaries at ${rust_layer_dir}"
     exit 1
   fi
-  cat > "${rust_layer_dir}.toml" <<EOL
+  cat >"${rust_layer_dir}.toml" <<EOL
 cache = true
 build = true
 launch = true
@@ -59,7 +61,7 @@ export CARGO_TARGET_DIR="${CARGO_HOME}/target"
 
 echo "-----> Building application using Cargo"
 if [ -s .cargo/config ]; then
-    cp -f .cargo/config "${CARGO_HOME}/config"
+  cp -f .cargo/config "${CARGO_HOME}/config"
 fi
 rm -rf target/
 cargo build $RUST_CARGO_BUILD_FLAGS

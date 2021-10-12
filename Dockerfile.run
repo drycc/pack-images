@@ -1,13 +1,13 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
-RUN ln -s /workspace /app
-
 ARG pack_uid=1000
 ARG pack_gid=1000
 
-RUN groupadd drycc --gid ${pack_gid} && \
-  useradd drycc -u ${pack_uid} -g ${pack_gid} -s /bin/bash -m
+RUN ln -s /workspace /app \
+  && groupadd drycc --gid ${pack_gid} \
+  && useradd drycc -u ${pack_uid} -g ${pack_gid} -s /bin/bash -m \
+  && chown -R drycc:drycc /usr/sbin/nginx /var/log/nginx
 
 ARG STACK
 LABEL io.buildpacks.stack.id="${STACK}"

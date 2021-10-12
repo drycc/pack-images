@@ -1,7 +1,7 @@
 # PHP Buildpack
 
 Compatible apps:
-- PHP apps that use composer, php version in 7.3.29 7.4.21 8.0.8
+- PHP apps that use composer.
   Config extensions.json in project root dir. e.g.
 ```
 tee > extensions.json < EOF
@@ -19,8 +19,18 @@ tee > extensions.json < EOF
 EOF
 ```
 
-### Usage
+## Usage
 
 ```bash
 pack build php-composer-project --builder drycc/buildpacks:20
+```
+
+## Version
+
+You can generate a declared version of `.php-version` in the directory, php version in 7.3.31 7.4.24 8.0.11.
+
+```
+cat > ".php-version" <<EOL
+x.y.z
+EOL
 ```

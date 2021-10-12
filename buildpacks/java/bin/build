@@ -1,23 +1,25 @@
 #!/usr/bin/env bash
+# shellcheck source=/dev/null
+. generate-layer.sh
 set -eo pipefail
 
 echo "---> Java Buildpack"
 #amd64 aarch64
 arch=$(dpkg --print-architecture)
 if [ "${arch}" == "arm64" ]; then
-    arch="aarch64"
+  arch="aarch64"
 fi
 # 1. GET ARGS
 bp_dir=$(
-	cd "$(dirname "$0")"/..
-	pwd
+  cd "$(dirname "$0")"/..
+  pwd
 )
 layers_dir=$1
 env_dir="$2/env"
 plan_path=$3
 
 # 2. LOAD USER-PROVIDED BUILD-TIME ENVIRONMENT VARIABLES
-if compgen -G "${env_dir}"/* > /dev/null; then
+if compgen -G "${env_dir}"/* >/dev/null; then
   for var in "${env_dir}"/*; do
     declare "$(basename "${var}")=$(<"${var}")"
   done
@@ -25,10 +27,10 @@ fi
 
 # 3. INSTALL JAVA
 get_jdk_url() {
-	if [ "${arch}" == "amd64" ]; then
-	  local arch="x64"
+  if [ "${arch}" == "amd64" ]; then
+    local arch="x64"
   fi
-	if [ "${version}" == "8" ]; then
+  if [ "${version}" == "8" ]; then
     echo "https://github.com/AdoptOpenJDK/openjdk8-upstream-binaries/releases/download/jdk8u292-b10/OpenJDK8U-jdk_${arch}_linux_8u292b10.tar.gz"
   elif [ "${version}" == "11" ]; then
     echo "https://github.com/AdoptOpenJDK/openjdk11-upstream-binaries/releases/download/jdk-11.0.11%2B9/OpenJDK11U-jdk_${arch}_linux_11.0.11_9.tar.gz"
@@ -36,29 +38,29 @@ get_jdk_url() {
     echo "https://download.java.net/java/GA/jdk16.0.1/7147401fd7354114ac51ef3e1328291f/9/GPL/openjdk-16.0.1_linux-${arch}_bin.tar.gz"
   elif [ "${version}" == "17" ]; then
     echo "https://download.java.net/java/early_access/jdk17/28/GPL/openjdk-17-ea+28_linux-${arch}_bin.tar.gz"
-	elif [ "${version}" == "18" ]; then
-		echo "https://download.java.net/java/early_access/jdk18/3/GPL/openjdk-18-ea+3_linux-${arch}_bin.tar.gz"
-	else
-		echo "${version}"
-	fi
+  elif [ "${version}" == "18" ]; then
+    echo "https://download.java.net/java/early_access/jdk18/3/GPL/openjdk-18-ea+3_linux-${arch}_bin.tar.gz"
+  else
+    echo "${version}"
+  fi
 }
 
-version=$(< "${plan_path}" yj -t | jq -r '.entries[] | select(.name == "jdk") | .version')
+version=$(yj <"${plan_path}" -t | jq -r '.entries[] | select(.name == "jdk") | .version')
 jdk_url="$(get_jdk_url)"
 
 # If it doesn't exist locally, create a JDK cache layer
 # This makes JDK available to subsequent buildpacks as well
 jdk_layer_dir=${layers_dir}/jdk
 if [[ -f "${jdk_layer_dir}.toml" ]]; then
-  cached_jdk_url=$(< "${jdk_layer_dir}.toml" yj -t | jq -r .metadata.url 2>/dev/null || echo 'JDK TOML parsing failed')
+  cached_jdk_url=$(yj <"${jdk_layer_dir}.toml" -t | jq -r .metadata.url 2>/dev/null || echo 'JDK TOML parsing failed')
 fi
 
-if [[ "${jdk_url}" != "${cached_jdk_url}" ]] ; then
+if [[ "${jdk_url}" != "${cached_jdk_url}" ]]; then
   echo "---> Downloading JDK"
   rm -rf "${layers_dir}"/jdk
   mkdir -p "${layers_dir}"/jdk/env
   wget -q -O - "${jdk_url}" | tar pxz -C "${jdk_layer_dir}" --strip-components=1
-  cat > "${jdk_layer_dir}.toml" << EOF
+  cat >"${jdk_layer_dir}.toml" <<EOF
 launch = true
 build = true
 cache = true
@@ -66,15 +68,15 @@ cache = true
 version = "${version}"
 EOF
 
-  echo "${layers_dir}"/jdk > "${layers_dir}"/jdk/env/JAVA_HOME
+  echo "${layers_dir}"/jdk >"${layers_dir}"/jdk/env/JAVA_HOME
   if [[ -z "${LD_LIBRARY_PATH}" ]]; then
-    echo "${JAVA_HOME}/jre/lib/${arch}/server" > "${jdk_layer_dir}/env/LD_LIBRARY_PATH"
+    echo "${JAVA_HOME}/jre/lib/${arch}/server" >"${jdk_layer_dir}/env/LD_LIBRARY_PATH"
   else
-    echo "${JAVA_HOME}/jre/lib/${arch}/server:${LD_LIBRARY_PATH}" > "${jdk_layer_dir}"/env/LD_LIBRARY_PATH
+    echo "${JAVA_HOME}/jre/lib/${arch}/server:${LD_LIBRARY_PATH}" >"${jdk_layer_dir}"/env/LD_LIBRARY_PATH
   fi
 
   mkdir -p "${jdk_layer_dir}/profile.d"
-  cat > "${jdk_layer_dir}/profile.d/jdk.sh" << EOF
+  cat >"${jdk_layer_dir}/profile.d/jdk.sh" <<EOF
 export JAVA_HOME="${jdk_layer_dir}"
 if [[ -z \$LD_LIBRARY_PATH ]]; then
   export LD_LIBRARY_PATH="\$JAVA_HOME/jre/lib/${arch}/server"
@@ -97,33 +99,33 @@ source "$bp_dir/lib/gradle_build"
 source "$bp_dir/lib/maven_build"
 build_choice="maven"
 if [ -f pom.xml ] && [ -f gradlew ]; then
-    if [[ -f .build-choice ]]; then
-        build_choice=$(< .build-choice tr -d '[:space:]')
-    fi
+  if [[ -f .build-choice ]]; then
+    build_choice=$(tr <.build-choice -d '[:space:]')
+  fi
 elif [ -f pom.xml ] && [ ! -f gradlew ]; then
-    build_choice="maven"
+  build_choice="maven"
 elif [ -f gradlew ] && [ ! -f pom.xml ]; then
-    build_choice="gradle"
+  build_choice="gradle"
 fi
 
 if [ "${build_choice}" == "maven" ]; then
-    maven_build
+  maven_build
 elif [ "${build_choice}" == "gradle" ]; then
-    gradle_build
+  gradle_build
 fi
 
 # 6. SET DEFAULT START COMMAND
 if [ -f Procfile ]; then
-    generate-launch.sh "${layers_dir}"
+  generate-launch.sh "${layers_dir}"
 else
-    target_dir="build/libs"
-    # shellcheck disable=SC2044
-    for jar_file in $(find "$target_dir" -maxdepth 1 -name "*.jar" -type f); do
-      cat >> "${layers_dir}/launch.toml" <<EOL
+  target_dir="build/libs"
+  # shellcheck disable=SC2044
+  for jar_file in $(find "$target_dir" -maxdepth 1 -name "*.jar" -type f); do
+    cat >>"${layers_dir}/launch.toml" <<EOL
 [[processes]]
 type = "web"
 command = "java -jar ${jar_file}"
 EOL
-  break;
-done
+    break
+  done
 fi

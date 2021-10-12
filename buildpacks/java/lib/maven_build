@@ -35,7 +35,7 @@ version = "${maven_version}"
 url = "${maven_url}"
 EOF
     fi
-    export PATH="${PATH}:${layers_dir}/maven/bin"
+    export PATH="${layers_dir}/maven/bin:${PATH}"
     echo "---> Running Maven Wrapper"
     mvn clean install -B -DskipTests
   fi

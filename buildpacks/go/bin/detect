@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-# 1. CHECK IF APPLICABLE 
+# 1. CHECK IF APPLICABLE
 if [ ! -f "go.mod" ] && [ ! -f "setup.py" ]; then
-   exit 100
+    exit 100
 fi
 
 # 2. GET ARGS
@@ -12,11 +12,11 @@ plan_path=$2
 # 3. GET CONFIGURATION
 version=1.16
 if [[ -f go.mod ]]; then
-    version=$(< go.mod grep 'go [1.*]' | tr -d 'go ')
+    version=$(grep <go.mod 'go [1.*]' | tr -d 'go ')
 fi
 
 # 4. DECLARE DEPENDENCIES
-cat >> "${plan_path}" <<EOL
+cat >>"${plan_path}" <<EOL
 # Buildpack provides this dependency
 #
 # NOTE: The dependency is provided during the 'build' process.

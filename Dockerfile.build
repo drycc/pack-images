@@ -6,12 +6,12 @@ ARG pack_gid=1000
 
 ADD rootfs /
 
-RUN groupadd drycc --gid ${pack_gid} && \
-  useradd drycc -u ${pack_uid} -g ${pack_gid} -s /bin/bash -m
-RUN mkdir /app && \
-  chown drycc:drycc /app
-RUN chmod +x /usr/local/bin/* && \
-  install-tools.sh
+RUN groupadd drycc --gid ${pack_gid} \
+  && useradd drycc -u ${pack_uid} -g ${pack_gid} -s /bin/bash -m \
+  && chown -R drycc:drycc /usr/sbin/nginx /var/log/nginx \
+  && mkdir /app \
+  && chown drycc:drycc /app \
+  && chmod +x /usr/local/bin/*
 
 ENV CNB_USER_ID=${pack_uid}
 ENV CNB_GROUP_ID=${pack_gid}
