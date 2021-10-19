@@ -52,7 +52,7 @@ fi
 if [[ -f package.json && "${local_package_checksum}" == "${remote_package_checksum}" ]]; then
   echo "---> Reusing package.json"
   cp -r "${node_modules_layer_dir}" "./node_modules"
-else
+elif [[ -f package.json ]]; then
   echo "---> Installing package.json with npm install."
   rm "${node_modules_layer_dir}" -rf
   npm install

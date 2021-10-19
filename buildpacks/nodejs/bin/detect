@@ -2,7 +2,7 @@
 set -eo pipefail
 
 # 1. CHECK IF APPLICABLE
-if [ ! -f "package.json" ] || [ ! -f ".node_version" ]; then
+if [ ! -f "package.json" ] || [ ! -f ".node-version" ]; then
     exit 100
 fi
 

@@ -2,7 +2,7 @@
 set -eo pipefail
 
 # 1. CHECK IF APPLICABLE
-if [[ ! -f composer.json ]] && [[ ! -f index.php ]]; then
+if [[ ! -f composer.json ]] && [[ ! -f index.php ]] && [[ ! -f .php-version ]]; then
     exit 100
 fi
 

@@ -2,7 +2,7 @@
 set -eo pipefail
 
 # 1. CHECK IF APPLICABLE
-if [ ! -f "requirements.txt" ] && [ ! -f "setup.py" ]; then
+if [ ! -f "requirements.txt" ] && [ ! -f "setup.py" ] && [ ! -f ".python-version" ]; then
     exit 100
 fi
 

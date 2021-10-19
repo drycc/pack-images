@@ -87,7 +87,7 @@ fi
 
 if [[ -f requirements.txt && "${local_requirements_checksum}" == "${remote_requirements_checksum}" ]]; then
   echo "---> Reusing requirements"
-else
+elif [[ -f requirements.txt ]]; then
   echo "---> Installing requirements with pip"
   python -m pip install -r requirements.txt \
     --exists-action=w --src="${python_layer_dir}"/src \

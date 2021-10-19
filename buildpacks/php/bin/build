@@ -76,7 +76,7 @@ if [[ -f "${extensions_layer_dir}.toml" ]]; then
 fi
 if [[ -f extensions.json && "${local_extensions_checksum}" == "${remote_extensions_checksum}" ]]; then
   echo "---> Reusing extensions.json"
-else
+elif [[ -f extensions.json ]]; then
   echo "---> Config pecl"
   pecl config-set php_dir "${php_layer_dir}"
   pecl config-set bin_dir "${php_layer_dir}"/bin
