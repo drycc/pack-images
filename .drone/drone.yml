@@ -1,5 +1,5 @@
 kind: pipeline
-type: docker
+type: exec
 name: linux-pack-amd64
 
 platform:
@@ -7,10 +7,11 @@ platform:
   os: linux
 
 steps:
+- name: install pack
+  commands:
+  - docker run --rm -v /usr/local/bin:/tmp/bin docker.io/drycc/go-dev cp /usr/local/bin/pack /tmp/bin
+
 - name: test
-  image: docker.io/drycc/go-dev
-  pull: always
-  privileged: true
   commands:
   - STACK=20 make test-style
   environment:
@@ -25,14 +26,8 @@ steps:
     - push
     - tag
     - pull_request
-  volumes:
-  - name: image_registries
-    path: /etc/containers/registries.conf
 
 - name: publish pack
-  image: docker.io/drycc/go-dev
-  pull: always
-  privileged: true
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
   - STACK=20 VERSION=20-linux-amd64 make publish-pack
@@ -49,24 +44,10 @@ steps:
     event:
     - push
     - tag
-  volumes:
-  - name: image_registries
-    path: /etc/containers/registries.conf
-
-trigger:
-  event:
-  - push
-  - tag
-  - pull_request
-
-volumes:
-- name: image_registries
-  host:
-    path: /etc/containers/registries.conf
 
 ---
 kind: pipeline
-type: docker
+type: exec
 name: linux-pack-arm64
 
 platform:
@@ -74,10 +55,11 @@ platform:
   os: linux
 
 steps:
+- name: install pack
+  commands:
+  - docker run --rm -v /usr/local/bin:/tmp/bin docker.io/drycc/go-dev cp /usr/local/bin/pack /tmp/bin
+
 - name: publish pack
-  image: docker.io/drycc/go-dev
-  pull: always
-  privileged: true
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
   - STACK=20 VERSION=20-linux-arm64 make publish-pack
@@ -90,9 +72,6 @@ steps:
       from_secret: docker_username
     DOCKER_PASSWORD:
       from_secret: docker_password
-  volumes:
-  - name: image_registries
-    path: /etc/containers/registries.conf
 
 trigger:
   event:
@@ -158,7 +137,7 @@ depends_on:
 
 ---
 kind: pipeline
-type: docker
+type: exec
 name: linux-buildpacks-amd64
 
 platform:
@@ -167,13 +146,8 @@ platform:
 
 steps:
 - name: publish amd64 buildpack
-  image: docker.io/drycc/go-dev
-  pull: always
-  privileged: true
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
-  - docker system service --time 0 unix:///var/run/docker.sock &
-  - sleep 9
   - STACK=20 VERSION=20-linux-amd64 make publish-buildpack
   environment:
     DEV_REGISTRY:
@@ -184,21 +158,17 @@ steps:
       from_secret: docker_username
     DOCKER_PASSWORD:
       from_secret: docker_password
-  volumes:
-  - name: image_registries
-    path: /etc/containers/registries.conf
-
-trigger:
-  event:
-  - push
-  - tag
+  when:
+    event:
+    - push
+    - tag
 
 depends_on:
 - manifest-pack
 
 ---
 kind: pipeline
-type: docker
+type: exec
 name: linux-buildpacks-arm64
 
 platform:
@@ -207,13 +177,8 @@ platform:
 
 steps:
 - name: publish arm64 buildpack
-  image: docker.io/drycc/go-dev
-  pull: always
-  privileged: true
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
-  - docker system service --time 0 unix:///var/run/docker.sock &
-  - sleep 9
   - STACK=20 VERSION=20-linux-arm64 make publish-buildpack
   environment:
     DEV_REGISTRY:
@@ -224,14 +189,10 @@ steps:
       from_secret: docker_username
     DOCKER_PASSWORD:
       from_secret: docker_password
-  volumes:
-  - name: image_registries
-    path: /etc/containers/registries.conf
-
-trigger:
-  event:
-  - push
-  - tag
+  when:
+    event:
+    - push
+    - tag
 
 depends_on:
 - manifest-pack
@@ -277,8 +238,3 @@ trigger:
 depends_on:
 - linux-buildpacks-amd64
 - linux-buildpacks-arm64
-
-volumes:
-- name: image_registries
-  host:
-    path: /etc/containers/registries.conf
