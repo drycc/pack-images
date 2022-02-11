@@ -19,8 +19,8 @@ generate_layer() {
     # shellcheck disable=SC2086
     apt-get $APT_OPTIONS update > /dev/null 2>&1
     # shellcheck disable=SC2086
-    apt-get $APT_OPTIONS -y -d --reinstall install "$(< .deb-list)" > /dev/null 2>&1
-    find "$APT_CACHE_DIR/archives/" -name "*.deb" -exec dpkg -x {} "$base_layer_dir/" \;
+    apt-get $APT_OPTIONS -y -d --reinstall install $(< .packages) > /dev/null 2>&1
+    find "$APT_CACHE_DIR/archives/" -name "*.deb" -exec dpkg --instdir="$base_layer_dir" -i {} \;
     
     mkdir -p "${base_layer_dir}/profile.d"
     cat > "${base_layer_dir}/profile.d/base.sh" <<EOL
@@ -40,9 +40,9 @@ EOL
     rm -rf "$APT_DIR"
 }
 
-if [[ -f ".deb-list" ]]; then
+if [[ -f ".packages" ]]; then
     echo "---> Generate base layer"
-    local_checksum=$(sha256sum .deb-list | cut -d ' ' -f 1 || echo 'not found')
+    local_checksum=$(sha256sum .packages | cut -d ' ' -f 1 || echo 'not found')
     remote_checksum='not found'
     if [[ -f "${base_layer_dir}.toml" ]]; then
         remote_checksum=$(< "${base_layer_dir}.toml" yj -t | jq -r .metadata 2>/dev/null || echo 'not found')
