@@ -1,72 +1,30 @@
 #!/usr/bin/env bash
-# shellcheck source=/dev/null
-. generate-layer.sh
 set -eo pipefail
 
 echo "---> Ruby Buildpack"
-
 # 1. GET ARGS
 layers_dir=$1
 plan_path=$3
 
-# 2. DOWNLOAD RUBY
-ruby_layer_dir="${layers_dir}/ruby"
-mkdir -p "${ruby_layer_dir}"
-arch=$(dpkg --print-architecture) # amd64 arm64
-ruby_arch=$(uname -m)             # x86_64 aarch64
+rm -rf /opt/drycc; ln -s "${layers_dir}" /opt/drycc
 
-# determine ruby version provided during detection
-ruby_version=$(yj <"${plan_path}" -t | jq -r '.entries[] | select(.name == "ruby") | .version')
-bin_version=${ruby_version:0:4}0
-remote_ruby_version="not found"
-if [[ -f "${ruby_layer_dir}.toml" ]]; then
-  remote_ruby_version=$(yj <"${ruby_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
-fi
-if [[ "${ruby_version}" == "${remote_ruby_version}" ]]; then
-  echo "---> Reusing ruby"
-else
-  echo "---> Downloading and extracting Ruby ${ruby_version}"
-  ruby_url="https://buildpacks.drycc.cc/ruby/${CNB_STACK_ID}/ruby-${ruby_version}-${arch}.tar.gz"
-  wget -q -O - "${ruby_url}" | tar -xzf - -C "${ruby_layer_dir}"
-  cat >"${ruby_layer_dir}.toml" <<EOL
-cache = true
-build = true
-launch = true
-metadata = "${ruby_version}"
-EOL
-  # shellcheck disable=SC2006
-  for file in $( (ls "${ruby_layer_dir}/bin/")); do
-    if [ "${file}" != 'ruby' ]; then
-      sed -ir 's/\#\!\/usr\/local\/bin\/ruby/\#\!\/usr\/bin\/env\ ruby/g' "${ruby_layer_dir}/bin/${file}"
-    fi
-  done
-
-  if [ ! -s "${ruby_layer_dir}/profile.d/ruby.sh" ]; then
-    mkdir "${ruby_layer_dir}/profile.d"
-    cat >"${ruby_layer_dir}/profile.d/ruby.sh" <<EOL
-export PATH="${ruby_layer_dir}/bin:${PATH}"
-export C_INCLUDE_PATH="${ruby_layer_dir}/include:${C_INCLUDE_PATH}"
-export CPLUS_INCLUDE_PATH="${ruby_layer_dir}/include:${CPLUS_INCLUDE_PATH}"
-export LIBRARY_PATH="${ruby_layer_dir}/lib:${LIBRARY_PATH}"
-export LD_LIBRARY_PATH="${ruby_layer_dir}/lib:${LD_LIBRARY_PATH}"
-export RUBYLIB="${ruby_layer_dir}/lib/ruby/${bin_version}/${ruby_arch}-linux/:${ruby_layer_dir}/lib/ruby/${bin_version}"
-export GEM_PATH="${ruby_layer_dir}/lib/ruby/gems/"
-export GEM_HOME="${ruby_layer_dir}/lib/ruby/gems/"
-export RUBYPATH="${ruby_layer_dir}/bin/"
-EOL
-  fi
-fi
-
-# 3. MAKE RUBY AVAILABLE TO THIS SCRIPT
+# 2. Install build deps
 # shellcheck source=/dev/null
-. "${ruby_layer_dir}/profile.d/ruby.sh"
+. generate-layers.sh "${layers_dir}"
+generate_deps_layer build-deps
+generate_deps_layer run-deps
+
+# 3. install ruby
+generate_stack_layer ruby "${plan_path}" true
+# shellcheck source=/dev/null
+. init-stack
 
 # Compares previous Gemfile.lock checksum to the current Gemfile.lock
 bundler_layer_dir="${layers_dir}/bundler"
 local_bundler_checksum=$(sha256sum Gemfile.lock | cut -d ' ' -f 1 || echo 'not found')
 remote_bundler_checksum="not found"
 if [[ -f "${bundler_layer_dir}.toml" ]]; then
-  remote_bundler_checksum=$(yj <"${bundler_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
+  remote_bundler_checksum=$(yj <"${bundler_layer_dir}.toml" -t | jq -r .metadata.version 2>/dev/null || echo 'not found')
 fi
 
 mkdir -p "${bundler_layer_dir}/bin"
@@ -77,12 +35,17 @@ if [[ -f Gemfile.lock && "${local_bundler_checksum}" == "${remote_bundler_checks
 else
   echo "---> Installing gems"
   cat >"${bundler_layer_dir}.toml" <<EOL
+[types]
 cache = true
 build = true
 launch = true
-metadata = "${local_bundler_checksum}"
+
+[metadata]
+version = "${local_bundler_checksum}"
 EOL
   bundle install
+  scanelp "${bundler_layer_dir}" > .auto-deps
+  generate_deps_layer auto-deps
 fi
 
 generate-launch.sh "${layers_dir}"

@@ -10,26 +10,19 @@ fi
 plan_path=$2
 
 # 3. GET CONFIGURATION
-version=3.9.7
+version=3.10.2
 if [[ -f .python-version ]]; then
     version=$(tr <.python-version -d '[:space:] | python-')
 fi
 
 # 4. DECLARE DEPENDENCIES
 cat >>"${plan_path}" <<EOL
-# Buildpack provides this dependency
-#
-# NOTE: The dependency is provided during the 'build' process.
-#
 [[provides]]
 name = "python"
 
-# Buildpack requires this dependency
-#
-# NOTE: Everything aside from 'name' is simply additional information that the providing buildpack can use to resolve
-#       the dependency.
-#
 [[requires]]
 name = "python"
+
+[requires.metadata]
 version = "${version}"
 EOL

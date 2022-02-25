@@ -2,7 +2,7 @@
 set -eo pipefail
 
 # 1. CHECK IF APPLICABLE
-if [ ! -f "go.mod" ]; then
+if [ ! -f "package.json" ] && [ ! -f ".node-version" ]; then
     exit 100
 fi
 
@@ -10,18 +10,19 @@ fi
 plan_path=$2
 
 # 3. GET CONFIGURATION
-version=1.17
-if [[ -f go.mod ]]; then
-    version=$(grep <go.mod 'go [1.*]' | tr -d 'go ')
+version=16.14.0
+if [[ -f .node-version ]]; then
+    version=$(tr <.node-version -d '[:space:] | node-')
 fi
 
 # 4. DECLARE DEPENDENCIES
 cat >>"${plan_path}" <<EOL
 [[provides]]
-name = "go"
+name = "node"
 
 [[requires]]
-name = "go"
+name = "node"
+
 [requires.metadata]
 version = "${version}"
 EOL

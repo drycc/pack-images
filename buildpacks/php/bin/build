@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck source=/dev/null
-. generate-layer.sh
 set -eo pipefail
 
 echo "---> PHP Buildpack"
@@ -8,91 +6,62 @@ echo "---> PHP Buildpack"
 # 1. GET ARGS
 layers_dir=$1
 plan_path=$3
+php_layer_dir="${layers_dir}"/php
+extensions_layer_dir="${layers_dir}"/extensions
+mkdir -p "${extensions_layer_dir}"/{docs,ext}
 
 bp_dir=$(
   cd "$(dirname "$0")"/..
   pwd
 )
-arch=$(dpkg --print-architecture) # amd64 arm64
-# 2. DOWNLOAD PHP
-php_layer_dir="${layers_dir}/php"
-mkdir -p "${php_layer_dir}"/config
-extensions_layer_dir="${layers_dir}/extensions"
-mkdir -p "${extensions_layer_dir}"/{docs,ext}
+rm -rf /opt/drycc; ln -s "${layers_dir}" /opt/drycc
 
-# determine php version provided during detection
-php_version=$(yj <"${plan_path}" -t | jq -r '.entries[] | select(.name == "php") | .version')
-remote_php_version="not found"
-if [[ -f "${php_layer_dir}.toml" ]]; then
-  remote_php_version=$(yj <"${php_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
-fi
-if [[ "${php_version}" == "${remote_php_version}" ]]; then
-  echo "---> Reusing php"
-else
-  echo "---> Downloading and extracting php ${php_version} ${arch}"
-  php_url="https://buildpacks.drycc.cc/php/${CNB_STACK_ID}/php-${php_version}-${arch}.tar.gz"
-  wget -q -O - "${php_url}" | tar -xzf - -C "${php_layer_dir}"
-  rm -f "php-${php_version}-${arch}.tar.gz"
-  cp "${php_layer_dir}/sbin/php-fpm" "${php_layer_dir}/bin"
-  "${php_layer_dir}"/bin/php -r "copy('https://install.phpcomposer.com/installer', 'composer-setup.php');"
-  "${php_layer_dir}"/bin/php composer-setup.php --install-dir="${php_layer_dir}/bin/"
-  mv "${php_layer_dir}/bin/composer.phar" "${php_layer_dir}/bin/composer"
-  cat >"${php_layer_dir}.toml" <<EOL
-cache = true
-build = true
-launch = true
-metadata = "${php_version}"
-EOL
-  if [ ! -s "${php_layer_dir}/profile.d/php.sh" ]; then
-    mkdir "${php_layer_dir}/profile.d"
-    cat >"${php_layer_dir}/profile.d/php.sh" <<EOL
-export PATH="${php_layer_dir}/bin:${php_layer_dir}/sbin:${PATH}"
-export PHP_PEAR_INSTALL_DIR="${php_layer_dir}/lib/php"
-export PHP_PEAR_PHP_BIN="${php_layer_dir}/bin/php"
-export php_layer_dir="${php_layer_dir}"
-export php_version="${php_version}"
-echo "Config pecl"
-pecl config-set php_dir "${php_layer_dir}"
-pecl config-set bin_dir "${php_layer_dir}"/bin
-pecl config-set ext_dir "${php_layer_dir}"/ext
-pecl config-set doc_dir "${extensions_layer_dir}"/docs
-EOL
-  fi
-  echo "---> Config php-fpm"
-  cp -f "${bp_dir}/config/php/"* "${php_layer_dir}/config/"
-  cp -f "${bp_dir}"/lib/* "${php_layer_dir}/bin/"
-  mv -f "${php_layer_dir}"/bin/Builder.php "${php_layer_dir}"/lib/php/PEAR/Builder.php
-fi
-
-# 3. MAKE PHP AVAILABLE TO THIS SCRIPT
+# 2. Install build deps
 # shellcheck source=/dev/null
-. "${php_layer_dir}/profile.d/php.sh"
+. generate-layers.sh "${layers_dir}"
+generate_deps_layer build-deps
+generate_deps_layer run-deps
+
+# 3. install php and nginx
+generate_stack_layer php "${plan_path}" true
+generate_stack_layer nginx "${plan_path}" true
+
+# 4. pre php env and tools
+php_version=$(yj <"${plan_path}" -t | jq -r ".entries[] | select(.name == \"php\") | .metadata.version")
+export php_version="${php_version}"
+export php_layer_dir="${php_layer_dir}"
+mkdir -p "${php_layer_dir}"/config/
+cp -rf "${php_layer_dir}/sbin/php-fpm" "${php_layer_dir}/bin"
+cp -rf "${bp_dir}/config/php/"* "${php_layer_dir}"/config/
+cp -rf "${bp_dir}"/lib/* "${php_layer_dir}"/bin/
+mv -f "${php_layer_dir}"/bin/Builder.php "${php_layer_dir}"/lib/php/PEAR/Builder.php
+# shellcheck source=/dev/null
+. init-stack
 
 # Compares previous extensions.json checksum to the current extensions.json
+pecl config-set ext_dir "${extensions_layer_dir}"/ext
+pecl config-set doc_dir "${extensions_layer_dir}"/docs
+
 local_extensions_checksum="$(sha256sum extensions.json | cut -d ' ' -f 1 || echo 'not found')"
 remote_extensions_checksum="not found"
 if [[ -f "${extensions_layer_dir}.toml" ]]; then
-  remote_extensions_checksum=$(yj <"${extensions_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
+  remote_extensions_checksum=$(yj <"${extensions_layer_dir}.toml" -t | jq -r .metadata.version 2>/dev/null || echo 'not found')
 fi
 if [[ -f extensions.json && "${local_extensions_checksum}" == "${remote_extensions_checksum}" ]]; then
   echo "---> Reusing extensions.json"
 elif [[ -f extensions.json ]]; then
-  echo "---> Config pecl"
-  pecl config-set php_dir "${php_layer_dir}"
-  pecl config-set bin_dir "${php_layer_dir}"/bin
-  pecl config-set ext_dir "${php_layer_dir}"/ext
-  pecl config-set doc_dir "${extensions_layer_dir}"/docs
   echo "---> Installing extensions.json"
   rm "${php_layer_dir}"/ext/* -rf
   cp -f "${bp_dir}/config/php/php.ini" "${php_layer_dir}/config/"
-  # shellcheck disable=SC1090
-  source "$bp_dir/bin/ext"
-  ext_install
+  "${bp_dir}"/bin/install-extensions
   cat >"${extensions_layer_dir}.toml" <<EOL
+[types]
 cache = true
 build = true
 launch = true
-metadata = "${local_extensions_checksum}"
+
+[metadata]
+version = "${local_extensions_checksum}"
 EOL
 fi
 
@@ -102,7 +71,7 @@ mkdir -p "${vendor_layer_dir}"
 local_composer_checksum=$(sha256sum composer.json | cut -d ' ' -f 1 || echo 'not found')
 remote_composer_checksum="not found"
 if [[ -f "${vendor_layer_dir}.toml" ]]; then
-  remote_composer_checksum=$(yj <"${vendor_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
+  remote_composer_checksum=$(yj <"${vendor_layer_dir}.toml" -t | jq -r .metadata.version 2>/dev/null || echo 'not found')
 fi
 
 composer config --no-plugins vendor-dir
@@ -119,19 +88,23 @@ else
     cp -r vendor/. "${vendor_layer_dir}/"
   fi
   cat >"${vendor_layer_dir}.toml" <<EOL
+[types]
 cache = true
 build = true
 launch = true
-metadata = "${local_composer_checksum}"
+
+[metadata]
+version = "${local_composer_checksum}"
 EOL
 fi
 
 echo "---> Config nginx"
 nginx_layer_dir="${layers_dir}/nginx"
 mkdir -p "${layers_dir}/nginx/"logs
-cp -r /etc/nginx/* "${nginx_layer_dir}"
+cp -r /opt/drycc/nginx/conf/* "${nginx_layer_dir}"
 cp "${bp_dir}/config/nginx/base.conf" "${nginx_layer_dir}/nginx-php.conf.tpl"
 cat >"${nginx_layer_dir}.toml" <<EOL
+[types]
 cache = true
 build = true
 launch = true
@@ -147,6 +120,7 @@ sed -i "s|@PORT@|\$2|g" "${nginx_layer_dir}/nginx-php.conf"
 php-fpm -c "${php_layer_dir}/config/php.ini" -y "${php_layer_dir}/config/php-fpm.conf" -p "${php_layer_dir}"
 nginx -p "${nginx_layer_dir}" -c "${nginx_layer_dir}/nginx-php.conf"
 SH
+
 chmod +x "${php_layer_dir}/bin/php-nginx-fpm"
 
 generate-launch.sh "${layers_dir}"

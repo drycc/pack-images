@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+#fake install-packages
+LAYERS_DIR="${LAYERS_DIR:?LAYERS_DIR is required}"
+STACK_NAME="${STACK_NAME:?STACK_NAME is required}"
+echo "$@" | tr ' ' '\n' | sort  -u -o ."${STACK_NAME}"-deps
+. generate-layers.sh "${LAYERS_DIR}"
+generate_deps_layer "${STACK_NAME}"-deps

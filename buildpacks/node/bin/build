@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+echo "---> Node Buildpack"
+
+# 1. GET ARGS
+layers_dir=$1
+plan_path=$3
+
+rm -rf /opt/drycc; ln -s "${layers_dir}" /opt/drycc
+
+# 2. Install build deps
+# shellcheck source=/dev/null
+. generate-layers.sh "${layers_dir}"
+generate_deps_layer build-deps
+generate_deps_layer run-deps
+
+# 3. install node
+generate_stack_layer node "${plan_path}" true
+
+# shellcheck source=/dev/null
+. init-stack
+
+# 4. install node modules
+node_modules_layer_dir="${layers_dir}/node_modules"
+mkdir -p "${node_modules_layer_dir}"
+# Compares previous package.json checksum to the current package.json
+local_package_checksum=$(sha256sum package.json | cut -d ' ' -f 1 || echo 'not found')
+remote_package_checksum='not found'
+if [[ -f "${node_modules_layer_dir}.toml" ]]; then
+  remote_package_checksum=$(yj <"${node_modules_layer_dir}.toml" -t | jq -r .metadata.version 2>/dev/null || echo 'not found')
+fi
+
+if [[ -f package.json && "${local_package_checksum}" == "${remote_package_checksum}" ]]; then
+  echo "---> Reusing package.json"
+  cp -r "${node_modules_layer_dir}"/* ./node_modules/
+elif [[ -f package.json ]]; then
+  echo "---> Installing package.json with npm install."
+  rm "${node_modules_layer_dir}" -rf
+  npm install
+  cp -r ./node_modules "${node_modules_layer_dir}"
+  cat >"${node_modules_layer_dir}.toml" <<EOL
+[types]
+cache = true
+build = true
+launch = true
+
+[metadata]
+version = "${local_package_checksum}"
+EOL
+fi
+
+json_get_key() {
+  local file="$1"
+  local key="$2"
+
+  if test -f "$file"; then
+    jq -c -M --raw-output "$key // \"\"" <"$file" || return 1
+  else
+    echo ""
+  fi
+}
+
+build_script=$(json_get_key "package.json" ".scripts.build")
+if [[ $build_script ]]; then
+  npm run build
+fi
+
+generate-launch.sh "${layers_dir}"

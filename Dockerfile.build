@@ -1,24 +1,19 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
-ARG pack_uid=1000
-ARG pack_gid=1000
-
+USER root
+RUN cp -rf /var/lib/dpkg /var/lib/dpkg-run; \
+  \
+  \
+  install-packages zlib1g git autoconf pkg-config build-essential; \
+  install-stack jq 1.6; \
+  install-stack yj 5.0.0; \
+  cp -rf /opt/drycc/*/bin/* /usr/local/bin; \
+  rm -rf /opt/drycc/*; \
+  \
+  \
+  rm -rf /var/lib/dpkg; \
+  mv /var/lib/dpkg-run /var/lib/dpkg;
 ADD rootfs /
-
-RUN groupadd drycc --gid ${pack_gid} \
-  && useradd drycc -u ${pack_uid} -g ${pack_gid} -s /bin/bash -m \
-  && chown -R drycc:drycc /usr/sbin/nginx /var/log/nginx \
-  && mkdir /app \
-  && chown drycc:drycc /app \
-  && chmod +x /usr/local/bin/*
-
-ENV CNB_USER_ID=${pack_uid}
-ENV CNB_GROUP_ID=${pack_gid}
-
-ARG STACK
-ENV STACK "${STACK}"
-ENV CNB_STACK_ID "${STACK}"
-LABEL io.buildpacks.stack.id="${STACK}"
 
 USER drycc

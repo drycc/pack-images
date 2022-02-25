@@ -1,4 +1,4 @@
-description = "Base builder for 20 stack, based on ubuntu:20.04 base image"
+description = "Base builder for drycc stack, based on debian base image"
 
 [lifecycle]
 uri = "{LIFECYCLE_URL}"
@@ -35,13 +35,13 @@ version = "0.0.1"
 
 
 [[buildpacks]]
-  id = "drycc/nodejs"
+  id = "drycc/node"
   version = "0.0.1"
-  uri = "./buildpacks/nodejs"
+  uri = "./buildpacks/node"
 
 [[order]]
 [[order.group]]
-id = "drycc/nodejs"
+id = "drycc/node"
 version = "0.0.1"
 
 
@@ -76,6 +76,6 @@ id = "drycc/php"
 version = "0.0.1"
 
 [stack]
-id = "drycc-20"
+id = "{STACK_ID}"
 run-image = "{STACK_RUN_IMAGE}"
 build-image = "{STACK_BUILD_IMAGE}"

@@ -3,10 +3,10 @@ api = "0.7"
 
 # Buildpack ID and metadata
 [buildpack]
-id = "drycc/java"
+id = "drycc/node"
 version = "0.0.1"
-name = "Java Buildpack"
-homepage = "https://github.com/drycc/pack-images/tree/main/buildpacks/java"
+name = "Node Buildpack"
+homepage = "https://github.com/drycc/pack-images/tree/main/buildpacks/node"
 
 # Stacks that the buildpack will work with
 [[stacks]]

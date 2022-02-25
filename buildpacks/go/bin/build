@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck source=/dev/null
-. generate-layer.sh
 set -eo pipefail
 
 echo "---> Go Buildpack"
@@ -9,34 +7,18 @@ echo "---> Go Buildpack"
 layers_dir=$1
 plan_path=$3
 
-# 2. DOWNLOAD go
-go_layer_dir="${layers_dir}/go"
-mkdir -p "${go_layer_dir}"
-arch=$(dpkg --print-architecture) # amd64 arm64
-# determine go version provided during detection
-go_version=$(yj <"${plan_path}" -t | jq -r '.entries[] | select(.name == "go") | .version')
-remote_go_version='not found'
-if [[ -f "${go_layer_dir}.toml" ]]; then
-  remote_go_version=$(yj <"${go_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
-fi
-if [[ "${go_version}" == "${remote_go_version}" ]]; then
-  echo "---> Reusing go"
-else
-  echo "---> Downloading and extracting go ${go_version}"
-  go_url=https://golang.org/dl/go${go_version}.linux-${arch}.tar.gz
-  wget -q -O - "${go_url}" | tar -xzf - -C "${go_layer_dir}"
-  cat >"${go_layer_dir}.toml" <<EOL
-cache = true
-build = true
-launch = true
-metadata = "${go_version}"
-EOL
-fi
+rm -rf /opt/drycc; ln -s "${layers_dir}" /opt/drycc
+# shellcheck source=/dev/null
+. generate-layers.sh "${layers_dir}"
+generate_deps_layer build-deps
+generate_deps_layer run-deps
 
+# 2. DOWNLOAD go
+generate_stack_layer go "${plan_path}" false
 go_cache_layer_dir="${layers_dir}/go_cache"
-# 3. MAKE go AVAILABLE TO THIS SCRIPT
-export PATH="${go_layer_dir}/go/bin:${PATH}"
-export GOPATH="${go_cache_layer_dir}"
+
+# shellcheck source=/dev/null
+. init-stack
 
 # Compares previous go.mod checksum to the current go.mod
 local_mod_checksum=$(sha256sum go.mod | cut -d ' ' -f 1 || echo 'not found')
@@ -53,10 +35,13 @@ else
   rm "${go_cache_layer_dir}/pkg" -rf
   go mod download
   cat >"${go_cache_layer_dir}.toml" <<EOL
+[types]
 cache = true
 build = true
-launch = true
-metadata = "${local_mod_checksum}"
+launch = false
+
+[metadata]
+version = "${local_mod_checksum}"
 EOL
 fi
 

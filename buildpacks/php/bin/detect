@@ -10,26 +10,33 @@ fi
 plan_path=$2
 
 # 3. GET CONFIGURATION
-version=8.0.11
+php_version=8.1.3
 if [[ -f .php-version ]]; then
-    version=$(tr <.php-version -d '[:space:]')
+    php_version=$(tr <.php-version -d '[:space:]')
+fi
+
+nginx_version=1.18.0
+if [[ -f .nginx-version ]]; then
+    nginx_version=$(tr <.nginx-version -d '[:space:]')
 fi
 
 # 4. DECLARE DEPENDENCIES
 cat >>"${plan_path}" <<EOL
-# Buildpack provides this dependency
-#
-# NOTE: The dependency is provided during the 'build' process.
-#
 [[provides]]
 name = "php"
 
-# Buildpack requires this dependency
-#
-# NOTE: Everything aside from 'name' is simply additional information that the providing buildpack can use to resolve
-#       the dependency.
-#
 [[requires]]
 name = "php"
-version = "${version}"
+
+[requires.metadata]
+version = "${php_version}"
+
+[[provides]]
+name = "nginx"
+
+[[requires]]
+name = "nginx"
+
+[requires.metadata]
+version = "${nginx_version}"
 EOL

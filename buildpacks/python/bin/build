@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck source=/dev/null
-. generate-layer.sh
 set -eo pipefail
 
 echo "---> Python Buildpack"
@@ -8,49 +6,21 @@ echo "---> Python Buildpack"
 # 1. GET ARGS
 layers_dir=$1
 plan_path=$3
-arch=$(dpkg --print-architecture) # amd64 arm64
-# 2. DOWNLOAD PYTHON
-python_layer_dir="${layers_dir}/python"
-mkdir -p "${python_layer_dir}"
 
-# determine python version provided during detection
-python_version=$(yj <"${plan_path}" -t | jq -r '.entries[] | select(.name == "python") | .version')
-remote_python_version="not found"
-if [[ -f "${python_layer_dir}.toml" ]]; then
-  remote_python_version=$(yj <"${python_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
-fi
+rm -rf /opt/drycc; ln -s "${layers_dir}" /opt/drycc
 
-if [[ "${python_version}" == "${remote_python_version}" ]]; then
-  echo "---> Reusing python"
-else
-  echo "---> Downloading and extracting Python ${python_version}"
-  python_url="https://buildpacks.drycc.cc/python/${CNB_STACK_ID}/python-${python_version}-${arch}.tar.gz"
-  wget -q -O - "${python_url}" | tar -xzf - -C "${python_layer_dir}"
-  cat >"${python_layer_dir}.toml" <<EOL
-cache = true
-build = true
-launch = true
-metadata = "${python_version}"
-EOL
-  # shellcheck disable=SC2006
-  for file in $( (ls "${python_layer_dir}/bin/")); do
-    if [ "${file}" == 'pip' ]; then
-      sed -ir 's/\#\!\/usr\/local\/bin\/python/\#\!\/usr\/bin\/env\ python/g' "${python_layer_dir}/bin/${file}"
-    fi
-  done
-  if [ ! -s "${python_layer_dir}/profile.d/python.sh" ]; then
-    mkdir "${python_layer_dir}/profile.d"
-    cat >"${python_layer_dir}/profile.d/python.sh" <<EOL
-export PATH="${python_layer_dir}/bin:${PATH}"
-export C_INCLUDE_PATH="${python_layer_dir}/include:${C_INCLUDE_PATH}"
-export CPLUS_INCLUDE_PATH="${python_layer_dir}/include:${CPLUS_INCLUDE_PATH}"
-export LIBRARY_PATH="${python_layer_dir}/lib:${LIBRARY_PATH}"
-export LD_LIBRARY_PATH="${python_layer_dir}/lib:${LD_LIBRARY_PATH}"
-export PKG_CONFIG_PATH="${python_layer_dir}/lib/pkg-config:${PKG_CONFIG_PATH}"
-EOL
-  fi
-fi
+# 2. Install build deps
+# shellcheck source=/dev/null
+. generate-layers.sh "${layers_dir}"
+generate_deps_layer build-deps
+generate_deps_layer run-deps
 
+# 3. install python
+generate_stack_layer python "${plan_path}" true
+# shellcheck source=/dev/null
+. init-stack
+
+python_layer_dir="${layers_dir}"/python
 rm -f "${python_layer_dir}/profile.d/pip.sh"
 if [ "${PIP_INDEX_URL}" ]; then
   tee >>"${python_layer_dir}/profile.d/pip.sh" <<EOF
@@ -63,16 +33,12 @@ python -m pip  config set global.extra-index-url "${PIP_INDEX_URL}"
 EOF
 fi
 
-# 3. MAKE python and pip AVAILABLE TO THIS SCRIPT
-# shellcheck source=/dev/null
-. "${python_layer_dir}/profile.d/python.sh"
-
 # Compares previous requirements checksum to the current requirements
 requirements_layer_dir="${layers_dir}/requirements"
 local_requirements_checksum=$(sha256sum requirements.txt | cut -d ' ' -f 1 || echo 'not found')
 remote_requirements_checksum='not found'
 if [[ -f "${requirements_layer_dir}.toml" ]]; then
-  remote_requirements_checksum=$(yj <"${requirements_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
+  remote_requirements_checksum=$(yj <"${requirements_layer_dir}.toml" -t | jq -r .metadata.version 2>/dev/null || echo 'not found')
 fi
 mkdir -p "${requirements_layer_dir}"
 
@@ -93,11 +59,16 @@ elif [[ -f requirements.txt ]]; then
     --exists-action=w --src="${python_layer_dir}"/src \
     --disable-pip-version-check --no-cache-dir
   cat >"${requirements_layer_dir}.toml" <<EOL
+[types]
 cache = true
 build = true
 launch = true
-metadata = "${local_requirements_checksum}"
+
+[metadata]
+version = "${local_requirements_checksum}"
 EOL
+  scanelp "${python_layer_dir}" > .auto-deps
+  generate_deps_layer auto-deps
 fi
 
 generate-launch.sh "${layers_dir}"

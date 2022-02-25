@@ -35,7 +35,7 @@ urls_extension_install() {
     rm -r /tmp/"${ext}"
 }
 
-ext_install() {
+main() {
   builtin_length=$(jq '.builtin|length' extensions.json)
   for ((i = 0; i < builtin_length; i++)); do
     ext=$(jq .builtin[$i] extensions.json)
@@ -55,3 +55,5 @@ ext_install() {
   done
 
 }
+
+main "$@"

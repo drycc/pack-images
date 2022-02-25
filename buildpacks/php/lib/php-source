@@ -20,8 +20,8 @@ case "$1" in
 		mkdir -p "$dir"
 		if [ ! -f "$dir/.extracted" ]; then
 		  php_url=https://www.php.net/distributions/php-"${php_version}".tar.xz
-      wget -q -O - "${php_url}" | tar -xJf - --strip-components=1 -C "${dir}"
-			touch "$dir/.extracted"
+          curl -fsSL "${php_url}" -o - | tar -xJf - --strip-components=1 -C "${dir}"
+		  touch "$dir/.extracted"
 		fi
 		;;
 
