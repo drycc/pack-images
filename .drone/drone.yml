@@ -7,10 +7,6 @@ platform:
   os: linux
 
 steps:
-- name: install pack
-  commands:
-  - docker run --rm -v /usr/local/bin:/tmp/bin docker.io/drycc/go-dev cp /usr/local/bin/pack /tmp/bin
-
 - name: test
   commands:
   - STACK=20 make test-style
@@ -30,7 +26,7 @@ steps:
 - name: publish pack
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
-  - STACK=20 VERSION=20-linux-amd64 make publish-pack
+  - CODENAME=bullseye make publish-pack
   environment:
     DEV_REGISTRY:
       from_secret: dev_registry
@@ -55,14 +51,10 @@ platform:
   os: linux
 
 steps:
-- name: install pack
-  commands:
-  - docker run --rm -v /usr/local/bin:/tmp/bin docker.io/drycc/go-dev cp /usr/local/bin/pack /tmp/bin
-
 - name: publish pack
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
-  - STACK=20 VERSION=20-linux-arm64 make publish-pack
+  - CODENAME=bullseye make publish-pack
   environment:
     DEV_REGISTRY:
       from_secret: dev_registry
@@ -148,7 +140,14 @@ steps:
 - name: publish amd64 buildpack
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
-  - STACK=20 VERSION=20-linux-amd64 make publish-buildpack
+  - docker run --rm
+      --env CODENAME=bullseye
+      --env DRYCC_REGISTRY=$DRYCC_REGISTRY
+      --entrypoint init-stack
+      -v "$(pwd):$(pwd)"
+      -w "$(pwd)"
+      drycc/imagebuilder:canary
+      install-packages make && make publish-buildpack
   environment:
     DEV_REGISTRY:
       from_secret: dev_registry
@@ -179,7 +178,14 @@ steps:
 - name: publish arm64 buildpack
   commands:
   - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
-  - STACK=20 VERSION=20-linux-arm64 make publish-buildpack
+  - docker run --rm
+      --env CODENAME=bullseye
+      --env DRYCC_REGISTRY=$DRYCC_REGISTRY
+      --entrypoint init-stack
+      -v "$(pwd):$(pwd)"
+      -w "$(pwd)"
+      drycc/imagebuilder:canary
+      install-packages make && make publish-buildpack
   environment:
     DEV_REGISTRY:
       from_secret: dev_registry

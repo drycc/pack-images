@@ -10,7 +10,7 @@ fi
 plan_path=$2
 
 # 3. GET CONFIGURATION
-version=8
+version=17
 if [[ -f .java-version ]]; then
     version=$(tr <.java-version -d '[:space:]')
 fi

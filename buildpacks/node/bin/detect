@@ -10,7 +10,7 @@ fi
 plan_path=$2
 
 # 3. GET CONFIGURATION
-version=16.14.0
+version=16
 if [[ -f .node-version ]]; then
     version=$(tr <.node-version -d '[:space:] | node-')
 fi
