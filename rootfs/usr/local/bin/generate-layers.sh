@@ -21,8 +21,8 @@ _create_deps_profile() {
 export PATH="${deps_layer_dir}/usr/bin:${deps_layer_dir}/bin:\${PATH}"
 export C_INCLUDE_PATH="${deps_layer_dir}/usr/include:\${C_INCLUDE_PATH}"
 export CPLUS_INCLUDE_PATH="${deps_layer_dir}/usr/include:\${CPLUS_INCLUDE_PATH}"
-export LIBRARY_PATH="${deps_layer_dir}/lib/$(uname -m)-linux-gnu:${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu:\${LIBRARY_PATH}"
-export LD_LIBRARY_PATH="${deps_layer_dir}/lib/$(uname -m)-linux-gnu:${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu:\${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${deps_layer_dir}/lib:${deps_layer_dir}/lib/$(uname -m)-linux-gnu:${deps_layer_dir}/usr/lib:${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu:\${LIBRARY_PATH}"
+export LD_LIBRARY_PATH="${deps_layer_dir}/lib:${deps_layer_dir}/lib/$(uname -m)-linux-gnu:${deps_layer_dir}/usr/lib:${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu:\${LD_LIBRARY_PATH}"
 export PKG_CONFIG_PATH="${deps_layer_dir}/lib/$(uname -m)-linux-gnu/pkg-config:${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu/pkg-config:\${PKG_CONFIG_PATH}"
 EOL
 }
