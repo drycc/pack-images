@@ -54,7 +54,8 @@ elif [[ -f extensions.json ]]; then
   rm "${php_layer_dir}"/ext/* -rf
   cp -f "${bp_dir}/config/php/php.ini" "${php_layer_dir}/config/"
   "${bp_dir}"/bin/install-extensions
-  cat >"${extensions_layer_dir}.toml" <<EOL
+fi
+cat >"${extensions_layer_dir}.toml" <<EOL
 [types]
 cache = true
 build = true
@@ -63,7 +64,6 @@ launch = true
 [metadata]
 version = "${local_extensions_checksum}"
 EOL
-fi
 
 # Compares previous composer.json checksum to the current composer.json
 vendor_layer_dir="${layers_dir}/vendor"
@@ -87,7 +87,8 @@ else
     rm "${vendor_layer_dir:?}/*" -rf
     cp -r vendor/. "${vendor_layer_dir}/"
   fi
-  cat >"${vendor_layer_dir}.toml" <<EOL
+fi
+cat >"${vendor_layer_dir}.toml" <<EOL
 [types]
 cache = true
 build = true
@@ -96,7 +97,6 @@ launch = true
 [metadata]
 version = "${local_composer_checksum}"
 EOL
-fi
 
 echo "---> Config nginx"
 nginx_layer_dir="${layers_dir}/nginx"

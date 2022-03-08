@@ -51,14 +51,7 @@ if [ "${PIP_EXTRA_INDEX_URL}" ]; then
   python -m pip config set global.extra-index-url "${PIP_EXTRA_INDEX_URL}"
 fi
 
-if [[ -f requirements.txt && "${local_requirements_checksum}" == "${remote_requirements_checksum}" ]]; then
-  echo "---> Reusing requirements"
-elif [[ -f requirements.txt ]]; then
-  echo "---> Installing requirements with pip"
-  python -m pip install -r requirements.txt \
-    --exists-action=w --src="${python_layer_dir}"/src \
-    --disable-pip-version-check --no-cache-dir
-  cat >"${requirements_layer_dir}.toml" <<EOL
+cat >"${requirements_layer_dir}.toml" <<EOL
 [types]
 cache = true
 build = true
@@ -67,6 +60,13 @@ launch = true
 [metadata]
 version = "${local_requirements_checksum}"
 EOL
+if [[ -f requirements.txt && "${local_requirements_checksum}" == "${remote_requirements_checksum}" ]]; then
+  echo "---> Reusing requirements"
+elif [[ -f requirements.txt ]]; then
+  echo "---> Installing requirements with pip"
+  python -m pip install -r requirements.txt \
+    --exists-action=w --src="${python_layer_dir}"/src \
+    --disable-pip-version-check --no-cache-dir
   scanelp "${python_layer_dir}" > .auto-deps
   generate_deps_layer auto-deps
 fi

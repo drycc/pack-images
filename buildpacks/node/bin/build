@@ -39,7 +39,8 @@ elif [[ -f package.json ]]; then
   rm "${node_modules_layer_dir}" -rf
   npm install
   cp -r ./node_modules "${node_modules_layer_dir}"
-  cat >"${node_modules_layer_dir}.toml" <<EOL
+fi
+cat >"${node_modules_layer_dir}.toml" <<EOL
 [types]
 cache = true
 build = true
@@ -48,7 +49,6 @@ launch = true
 [metadata]
 version = "${local_package_checksum}"
 EOL
-fi
 
 json_get_key() {
   local file="$1"

@@ -34,7 +34,11 @@ if [[ -f Gemfile.lock && "${local_bundler_checksum}" == "${remote_bundler_checks
   echo "---> Reusing gems"
 else
   echo "---> Installing gems"
-  cat >"${bundler_layer_dir}.toml" <<EOL
+  bundle install
+  scanelp "${bundler_layer_dir}" > .auto-deps
+  generate_deps_layer auto-deps
+fi
+cat >"${bundler_layer_dir}.toml" <<EOL
 [types]
 cache = true
 build = true
@@ -43,9 +47,5 @@ launch = true
 [metadata]
 version = "${local_bundler_checksum}"
 EOL
-  bundle install
-  scanelp "${bundler_layer_dir}" > .auto-deps
-  generate_deps_layer auto-deps
-fi
 
 generate-launch.sh "${layers_dir}"

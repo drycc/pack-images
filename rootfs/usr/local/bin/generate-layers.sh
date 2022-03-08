@@ -82,8 +82,8 @@ generate_deps_layer() {
             mkdir -p "${deps_layer_dir}"
             _install_deps "${deps_file}" "${deps_layer_dir}"
             _create_deps_profile "${deps_layer_dir}"
-            _create_deps_metadata "${deps_type}"
         fi
+        _create_deps_metadata "${deps_type}"
         # shellcheck source=/dev/null
         . "${deps_layer_dir}/profile.d/deps.sh"
     else
@@ -104,6 +104,7 @@ generate_stack_layer() {
     if [[ -f "${stack_layer_dir}.toml" ]]; then
         remote_stack_version=$(yj <"${stack_layer_dir}.toml" -t | jq -r .metadata.version 2>/dev/null || echo 'not found')
     fi
+
     if [[ "${stack_version}" == "${remote_stack_version}" ]]; then
         echo "---> Reusing ${stack_name} ${stack_version}"
     else
@@ -111,7 +112,8 @@ generate_stack_layer() {
         export LAYERS_DIR=${layers_dir}
         export STACK_NAME=${stack_name}
         install-stack "${stack_name}" "${stack_version}"
-        cat >"${stack_layer_dir}.toml" <<EOL
+    fi
+    cat >"${stack_layer_dir}.toml" <<EOL
 [types]
 cache = true
 build = true
@@ -120,7 +122,7 @@ launch = ${launch}
 [metadata]
 version = "${stack_version}"
 EOL
-    fi
+
 }
 
 generate_base_layer
