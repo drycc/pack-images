@@ -8,20 +8,20 @@ mkdir -p "$APT_STATE_DIR/lists/partial"
 APT_OPTIONS="-o debug::nolocking=true"
 APT_OPTIONS="$APT_OPTIONS -o dir::cache=$APT_CACHE_DIR"
 APT_OPTIONS="$APT_OPTIONS -o dir::state=$APT_STATE_DIR"
-if [[ -f ".source-list" ]]; then
-    APT_OPTIONS="$APT_OPTIONS -o dir::etc::sourcelist=$(pwd)/.source-list"
+if [[ -f ".sources-list" ]]; then
+    APT_OPTIONS="$APT_OPTIONS -o dir::etc::sourcelist=$(pwd)/.sources-list"
 else
     APT_OPTIONS="$APT_OPTIONS -o dir::etc::sourcelist=/etc/apt/sources.list"
 fi
 
 apt-update() {
     # shellcheck disable=SC2086
-    apt-get $APT_OPTIONS update > /dev/null 2>&1
+    apt-get $APT_OPTIONS update
 }
 
 apt-clean() {
     # shellcheck disable=SC2086
-    apt-get $APT_OPTIONS clean > /dev/null 2>&1
+    apt-get $APT_OPTIONS clean
 }
 
 apt-install() {
