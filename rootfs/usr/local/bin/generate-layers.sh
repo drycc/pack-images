@@ -19,7 +19,6 @@ _create_deps_profile() {
     mkdir -p "${deps_layer_dir}"/profile.d
     mkdir -p "${deps_layer_dir}"/etc/ld.so.conf.d
     cat > "${deps_layer_dir}/profile.d/deps.sh" <<EOL
-export PATH="${deps_layer_dir}/usr/bin:${deps_layer_dir}/bin:\${PATH}"
 export C_INCLUDE_PATH="${deps_layer_dir}/usr/include:\${C_INCLUDE_PATH}"
 export CPLUS_INCLUDE_PATH="${deps_layer_dir}/usr/include:\${CPLUS_INCLUDE_PATH}"
 export PKG_CONFIG_PATH="${deps_layer_dir}/lib/$(uname -m)-linux-gnu/pkg-config:${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu/pkg-config:\${PKG_CONFIG_PATH}"
