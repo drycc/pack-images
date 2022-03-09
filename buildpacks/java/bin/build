@@ -5,7 +5,6 @@ shopt -s  expand_aliases
 layers_dir=$1
 plan_path=$3
 
-rm -rf /opt/drycc; ln -s "${layers_dir}" /opt/drycc
 # shellcheck source=/dev/null
 . generate-layers.sh "${layers_dir}"
 generate_deps_layer build-deps

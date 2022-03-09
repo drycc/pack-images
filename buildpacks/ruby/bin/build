@@ -6,8 +6,6 @@ echo "---> Ruby Buildpack"
 layers_dir=$1
 plan_path=$3
 
-rm -rf /opt/drycc; ln -s "${layers_dir}" /opt/drycc
-
 # 2. Install build deps
 # shellcheck source=/dev/null
 . generate-layers.sh "${layers_dir}"

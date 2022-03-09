@@ -14,7 +14,6 @@ bp_dir=$(
   cd "$(dirname "$0")"/..
   pwd
 )
-rm -rf /opt/drycc; ln -s "${layers_dir}" /opt/drycc
 
 # 2. Install build deps
 # shellcheck source=/dev/null

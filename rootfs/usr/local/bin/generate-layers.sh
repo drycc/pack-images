@@ -16,15 +16,21 @@ _install_deps() {
 
 _create_deps_profile() {
     local deps_layer_dir="$1"
-    mkdir -p "${deps_layer_dir}/profile.d"
+    mkdir -p "${deps_layer_dir}"/profile.d
+    mkdir -p "${deps_layer_dir}"/etc/ld.so.conf.d
     cat > "${deps_layer_dir}/profile.d/deps.sh" <<EOL
 export PATH="${deps_layer_dir}/usr/bin:${deps_layer_dir}/bin:\${PATH}"
 export C_INCLUDE_PATH="${deps_layer_dir}/usr/include:\${C_INCLUDE_PATH}"
 export CPLUS_INCLUDE_PATH="${deps_layer_dir}/usr/include:\${CPLUS_INCLUDE_PATH}"
-export LIBRARY_PATH="${deps_layer_dir}/lib:${deps_layer_dir}/lib/$(uname -m)-linux-gnu:${deps_layer_dir}/usr/lib:${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu:\${LIBRARY_PATH}"
-export LD_LIBRARY_PATH="${deps_layer_dir}/lib:${deps_layer_dir}/lib/$(uname -m)-linux-gnu:${deps_layer_dir}/usr/lib:${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu:\${LD_LIBRARY_PATH}"
 export PKG_CONFIG_PATH="${deps_layer_dir}/lib/$(uname -m)-linux-gnu/pkg-config:${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu/pkg-config:\${PKG_CONFIG_PATH}"
 EOL
+    cat > "${deps_layer_dir}/etc/ld.so.conf.d/deps.conf" <<EOL
+${deps_layer_dir}/lib
+${deps_layer_dir}/lib/$(uname -m)-linux-gnu
+${deps_layer_dir}/usr/lib
+${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu
+EOL
+    sudo ldconfig
 }
 
 _create_deps_metadata() {
@@ -48,10 +54,13 @@ EOL
 generate_base_layer() {
     base_layer="${layers_dir}"/base
     mkdir -p "${base_layer}/profile.d" 
-    cat > "${base_layer}/profile.d/base.sh" <<EOL
+    cat > "${base_layer}/profile.d/link.sh" <<EOL
     rm -rf /opt/drycc
     ln -s "${layers_dir}" /opt/drycc
+    echo "include ${layers_dir}/*/etc/ld.so.conf.d/*.conf" > /etc/ld.so.conf.d/drycc.conf
+    sudo ldconfig
 EOL
+    bash "${base_layer}/profile.d/link.sh"
     cat > "${base_layer}.toml" <<EOL
 [types]
 cache = true

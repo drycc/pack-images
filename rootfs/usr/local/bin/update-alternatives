@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+if [[ $1 == "--install" ]]; then
+  ln -s $4 $2 || /usr/bin/update-alternatives "$@"
+else
+  /usr/bin/update-alternatives "$@"
+fi
+

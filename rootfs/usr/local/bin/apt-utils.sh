@@ -33,7 +33,18 @@ apt-install() {
         if [[ ! -f "${DEB_FILE}" ]] ; then
             curl -fsSL -o "${DEB_FILE}" "${DEB_URL}"
         fi
+        dpkg -e "${DEB_FILE}" "$APT_INSTALL_DIR"/DEBIAN
+        if [[ -f "$APT_INSTALL_DIR"/DEBIAN/preinst ]] ; then
+            sed -i "s#/usr/lib/#$APT_INSTALL_DIR/usr/lib/#g" "$APT_INSTALL_DIR"/DEBIAN/preinst
+            "$APT_INSTALL_DIR"/DEBIAN/preinst install 2>/dev/null || echo "skip exec ${DEB_FILE} postinst"
+        fi
         dpkg -x "${DEB_FILE}" "$APT_INSTALL_DIR"
+        if [[ -f "$APT_INSTALL_DIR"/DEBIAN/postinst ]] ; then
+            sed -i "s#/usr/lib/#$APT_INSTALL_DIR/usr/lib/#g" "$APT_INSTALL_DIR"/DEBIAN/postinst
+            "$APT_INSTALL_DIR"/DEBIAN/postinst configure 2>/dev/null || echo "skip exec ${DEB_FILE} postinst"
+        fi
+        rm -rf "$APT_INSTALL_DIR"/DEBIAN
+        
         pkgconfig_list=$(find "$APT_INSTALL_DIR"/usr/lib/*-linux-gnu/pkgconfig/*.pc 2>/dev/null || echo "")
         for pkgconfig in ${pkgconfig_list}
         do
