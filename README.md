@@ -21,7 +21,7 @@ The basic image is based on Debian system, See the table below for system descri
 
 STACK ID     | Buildpacks image                | Operating System
 -------------|---------------------------------|---------------------------------
-drycc-20     | docker.io/drycc/buildpacks:20   | Debian 11 Bullseye 
+drycc-20     | registry.drycc.cc/drycc/buildpacks:20   | Debian 11 Bullseye 
 
 The basic layer of buildpack supports custom software sources and custom software.
 For example, if we use alicloud to install libpq-dev, we can add `.deb-list` and `·source-list` files to the project.

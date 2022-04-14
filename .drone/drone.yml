@@ -9,12 +9,15 @@ platform:
 steps:
 - name: test
   commands:
+  - mkdir -p $HOMEPATH/.docker; echo $IMAGE_PULL_SECRETS > $HOMEPATH/.docker/config.json
   - STACK=20 make test-style
   environment:
     DEV_REGISTRY:
       from_secret: dev_registry
     DRYCC_REGISTRY:
       from_secret: drycc_registry
+    IMAGE_PULL_SECRETS:
+      from_secret: container_pull_secrets
     CODECOV_TOKEN:
       from_secret: codecov_token
   when:
@@ -25,17 +28,17 @@ steps:
 
 - name: publish pack
   commands:
-  - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
+  - echo $CONTAINER_PASSWORD | docker login $DRYCC_REGISTRY --username $CONTAINER_USERNAME --password-stdin > /dev/null 2>&1
   - CODENAME=bullseye make publish-pack
   environment:
     DEV_REGISTRY:
       from_secret: dev_registry
     DRYCC_REGISTRY:
       from_secret: drycc_registry
-    DOCKER_USERNAME:
-      from_secret: docker_username
-    DOCKER_PASSWORD:
-      from_secret: docker_password
+    CONTAINER_USERNAME:
+      from_secret: container_username
+    CONTAINER_PASSWORD:
+      from_secret: container_password
   when:
     event:
     - push
@@ -53,17 +56,17 @@ platform:
 steps:
 - name: publish pack
   commands:
-  - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
+  - echo $CONTAINER_PASSWORD | docker login $DRYCC_REGISTRY --username $CONTAINER_USERNAME --password-stdin > /dev/null 2>&1
   - CODENAME=bullseye make publish-pack
   environment:
     DEV_REGISTRY:
       from_secret: dev_registry
     DRYCC_REGISTRY:
       from_secret: drycc_registry
-    DOCKER_USERNAME:
-      from_secret: docker_username
-    DOCKER_PASSWORD:
-      from_secret: docker_password
+    CONTAINER_USERNAME:
+      from_secret: container_username
+    CONTAINER_PASSWORD:
+      from_secret: container_password
 
 trigger:
   event:
@@ -74,13 +77,15 @@ trigger:
 kind: pipeline
 type: docker
 name: manifest-pack
+image_pull_secrets:
+- container_pull_secrets
 
 steps:
 - name: generate pack manifest
-  image: docker.io/library/alpine
+  image: registry.drycc.cc/drycc/python-dev
   commands:
-  - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" .drone/manifest-run.tmpl
-  - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" .drone/manifest-build.tmpl
+  - sed -i "s/registry.drycc.cc/$${DRYCC_REGISTRY}/g" .drone/manifest-run.tmpl
+  - sed -i "s/registry.drycc.cc/$${DRYCC_REGISTRY}/g" .drone/manifest-build.tmpl
   - sed -i "s/20/$${STACK}/g" .drone/manifest-run.tmpl
   - sed -i "s/20/$${STACK}/g" .drone/manifest-build.tmpl
   environment:
@@ -93,9 +98,9 @@ steps:
   settings:
     spec: .drone/manifest-run.tmpl
     username:
-      from_secret: docker_username
+      from_secret: container_username
     password:
-      from_secret: docker_password
+      from_secret: container_password
   environment:
     STACK: 20
     DEV_REGISTRY:
@@ -108,9 +113,9 @@ steps:
   settings:
     spec: .drone/manifest-build.tmpl
     username:
-      from_secret: docker_username
+      from_secret: container_username
     password:
-      from_secret: docker_password
+      from_secret: container_password
   environment:
     STACK: 20
     DEV_REGISTRY:
@@ -139,24 +144,24 @@ platform:
 steps:
 - name: publish amd64 buildpack
   commands:
-  - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
+  - echo $CONTAINER_PASSWORD | docker login $DRYCC_REGISTRY --username $CONTAINER_USERNAME --password-stdin > /dev/null 2>&1
   - docker run --rm
+      -v "/usr/local/bin:/tmp/bin"
       --env CODENAME=bullseye
       --env DRYCC_REGISTRY=$DRYCC_REGISTRY
       --entrypoint init-stack
-      -v "$(pwd):$(pwd)"
-      -w "$(pwd)"
-      drycc/imagebuilder:canary
-      install-packages make && make publish-buildpack
+      $DRYCC_REGISTRY/drycc/imagebuilder:canary
+      bash -c "cp /opt/drycc/pack/bin/pack /tmp/bin"
+  - make publish-buildpack
   environment:
     DEV_REGISTRY:
       from_secret: dev_registry
     DRYCC_REGISTRY:
       from_secret: drycc_registry
-    DOCKER_USERNAME:
-      from_secret: docker_username
-    DOCKER_PASSWORD:
-      from_secret: docker_password
+    CONTAINER_USERNAME:
+      from_secret: container_username
+    CONTAINER_PASSWORD:
+      from_secret: container_password
   when:
     event:
     - push
@@ -177,24 +182,24 @@ platform:
 steps:
 - name: publish arm64 buildpack
   commands:
-  - echo $DOCKER_PASSWORD | docker login $DRYCC_REGISTRY --username $DOCKER_USERNAME --password-stdin
+  - echo $CONTAINER_PASSWORD | docker login $DRYCC_REGISTRY --username $CONTAINER_USERNAME --password-stdin > /dev/null 2>&1
   - docker run --rm
+      -v "/usr/local/bin:/tmp/bin"
       --env CODENAME=bullseye
       --env DRYCC_REGISTRY=$DRYCC_REGISTRY
       --entrypoint init-stack
-      -v "$(pwd):$(pwd)"
-      -w "$(pwd)"
-      drycc/imagebuilder:canary
-      install-packages make && make publish-buildpack
+      $DRYCC_REGISTRY/drycc/imagebuilder:canary
+      bash -c "cp /opt/drycc/pack/bin/pack /tmp/bin"
+  - make publish-buildpack
   environment:
     DEV_REGISTRY:
       from_secret: dev_registry
     DRYCC_REGISTRY:
       from_secret: drycc_registry
-    DOCKER_USERNAME:
-      from_secret: docker_username
-    DOCKER_PASSWORD:
-      from_secret: docker_password
+    CONTAINER_USERNAME:
+      from_secret: container_username
+    CONTAINER_PASSWORD:
+      from_secret: container_password
   when:
     event:
     - push
@@ -207,13 +212,15 @@ depends_on:
 kind: pipeline
 type: docker
 name: manifest-buildpacks
+image_pull_secrets:
+- container_pull_secrets
 
 steps:
 - name: generate buildpacks manifest
-  image: docker.io/library/alpine
+  image: registry.drycc.cc/drycc/python-dev
   commands:
-  - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" .drone/manifest-buildpacks.tmpl
-  - sed -i "s/docker.io/$${DRYCC_REGISTRY}/g" builder.toml
+  - sed -i "s/registry.drycc.cc/$${DRYCC_REGISTRY}/g" .drone/manifest-buildpacks.tmpl
+  - sed -i "s/registry.drycc.cc/$${DRYCC_REGISTRY}/g" builder.toml
   - sed -i "s/20/$${STACK}/g" .drone/manifest-buildpacks.tmpl
   - sed -i "s/20/$${STACK}/g" builder.toml
   environment:
@@ -226,9 +233,9 @@ steps:
   settings:
     spec: .drone/manifest-buildpacks.tmpl
     username:
-      from_secret: docker_username
+      from_secret: container_username
     password:
-      from_secret: docker_password
+      from_secret: container_password
   environment:
     STACK: 20
     DEV_REGISTRY:

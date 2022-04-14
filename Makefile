@@ -1,6 +1,6 @@
 # If DRYCC_REGISTRY is not set, try to populate it from legacy DEV_REGISTRY
 CODENAME ?= bullseye
-DEV_REGISTRY ?= docker.io
+DEV_REGISTRY ?= registry.drycc.cc
 DRYCC_REGISTRY ?= ${DEV_REGISTRY}
 PLATFORM ?= $(shell python3 _scripts/utils.py platform)
 ARCH ?= $(shell python3 _scripts/utils.py arch)
