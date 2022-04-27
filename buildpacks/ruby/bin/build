@@ -33,7 +33,7 @@ if [[ -f Gemfile.lock && "${local_bundler_checksum}" == "${remote_bundler_checks
 else
   echo "---> Installing gems"
   bundle install
-  scanelp "${bundler_layer_dir}" > .auto-deps
+  scanelp "${bundler_layer_dir}" > "${BASE_LAYER}"/deps/.auto-deps
   generate_deps_layer auto-deps
 fi
 cat >"${bundler_layer_dir}.toml" <<EOL

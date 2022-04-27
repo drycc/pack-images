@@ -51,16 +51,23 @@ EOL
 }
 
 generate_base_layer() {
-    base_layer="${layers_dir}"/base
-    mkdir -p "${base_layer}/profile.d" 
-    cat > "${base_layer}/profile.d/link.sh" <<EOL
+    BASE_LAYER="${layers_dir}"/base
+    mkdir -p "${BASE_LAYER}/deps"
+    if [ -e .build-deps ]; then
+        cp .build-deps "${BASE_LAYER}/deps"
+    fi
+    if [ -e .run-deps ]; then
+        cp .run-deps "${BASE_LAYER}/deps"
+    fi
+    mkdir -p "${BASE_LAYER}/profile.d" 
+    cat > "${BASE_LAYER}/profile.d/link.sh" <<EOL
     rm -rf /opt/drycc
     ln -s "${layers_dir}" /opt/drycc
     echo "include ${layers_dir}/*/etc/ld.so.conf.d/*.conf" > /etc/ld.so.conf.d/drycc.conf
     sudo ldconfig
 EOL
-    bash "${base_layer}/profile.d/link.sh"
-    cat > "${base_layer}.toml" <<EOL
+    bash "${BASE_LAYER}/profile.d/link.sh"
+    cat > "${BASE_LAYER}.toml" <<EOL
 [types]
 cache = true
 build = true
@@ -69,11 +76,12 @@ launch = true
 [metadata]
 version = "1.0.0"
 EOL
+    export BASE_LAYER
 }
 
 generate_deps_layer() {
     local deps_type="$1"
-    local deps_file=."$deps_type"
+    local deps_file="${BASE_LAYER}"/deps/."$deps_type"
     local deps_layer_dir="${layers_dir}"/"$deps_type"
     if [[ -f "${deps_file}" &&  $(<"${deps_file}") != "" ]]; then
         echo "---> Generate ${deps_type} layer"

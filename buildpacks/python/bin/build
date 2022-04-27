@@ -65,7 +65,7 @@ elif [[ -f requirements.txt ]]; then
   python -m pip install -r requirements.txt \
     --exists-action=w --src="${python_layer_dir}"/src \
     --disable-pip-version-check --no-cache-dir
-  scanelp "${python_layer_dir}" > .auto-deps
+  scanelp "${python_layer_dir}" > "${BASE_LAYER}"/deps/.auto-deps
   generate_deps_layer auto-deps
 fi
 
