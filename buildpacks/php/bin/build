@@ -6,6 +6,10 @@ echo "---> PHP Buildpack"
 # 1. GET ARGS
 layers_dir=$1
 plan_path=$3
+
+# shellcheck source=/dev/null
+. generate-project.sh "${layers_dir}"
+
 php_layer_dir="${layers_dir}"/php
 extensions_layer_dir="${layers_dir}"/extensions
 mkdir -p "${extensions_layer_dir}"/{docs,ext}

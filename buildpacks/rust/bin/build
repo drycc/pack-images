@@ -7,6 +7,9 @@ echo "---> Rust Buildpack"
 layers_dir=$1
 plan_path=$3
 
+# shellcheck source=/dev/null
+. generate-project.sh "${layers_dir}"
+
 # 2. Install build deps
 # shellcheck source=/dev/null
 . generate-layers.sh "${layers_dir}"

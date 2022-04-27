@@ -8,6 +8,9 @@ layers_dir=$1
 plan_path=$3
 
 # shellcheck source=/dev/null
+. generate-project.sh "${layers_dir}"
+
+# shellcheck source=/dev/null
 . generate-layers.sh "${layers_dir}"
 generate_deps_layer build-deps
 generate_deps_layer run-deps
