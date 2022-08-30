@@ -4,7 +4,7 @@ DEV_REGISTRY ?= registry.drycc.cc
 DRYCC_REGISTRY ?= ${DEV_REGISTRY}
 PLATFORM ?= $(shell python3 _scripts/utils.py platform)
 ARCH ?= $(shell python3 _scripts/utils.py arch)
-LIFECYCLE_VERSION ?= v0.13.3
+LIFECYCLE_VERSION ?= v0.14.1
 ifeq ($(ARCH),amd64)
 LIFECYCLE_URL = https://github.com/buildpacks/lifecycle/releases/download/$(LIFECYCLE_VERSION)/lifecycle-${LIFECYCLE_VERSION}+linux.x86-64.tgz
 else
