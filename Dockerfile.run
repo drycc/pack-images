@@ -3,22 +3,18 @@ FROM ${BASE_IMAGE}
 
 ARG STACK_ID
 
-ENV DRYCC_UID=1001 \
-  DRYCC_GID=1001 \
-  DRYCC_HOME_DIR=/workspace
+ENV CNB_USER_ID 1001
+ENV CNB_GROUP_ID 1001
+ENV CNB_STACK_ID ${STACK_ID}
+ENV CNB_APP_DIR /workspace
 
-RUN groupadd drycc --gid ${DRYCC_GID} \
-  && useradd drycc -u ${DRYCC_UID} -g ${DRYCC_GID} -s /bin/bash -m -d ${DRYCC_HOME_DIR} \
-  && chown ${DRYCC_GID}:${DRYCC_UID} /opt /etc/ld.so.conf.d \
+RUN groupadd drycc --gid ${CNB_USER_ID} \
+  && useradd drycc -u ${CNB_USER_ID} -g ${CNB_GROUP_ID} -s /bin/bash -m \
+  && chown ${CNB_USER_ID}:${CNB_GROUP_ID} /opt /etc/ld.so.conf.d \
   && install-packages sudo \
   && echo "drycc ALL=(root) NOPASSWD:/usr/sbin/ldconfig" > /etc/sudoers.d/drycc
 
-USER ${DRYCC_UID}
-# Pack style, `=` cannot be used
-ENV CNB_USER_ID ${DRYCC_UID}
-ENV CNB_GROUP_ID ${DRYCC_GID}
-ENV CNB_STACK_ID ${STACK_ID}
-ENV CNB_APP_DIR ${DRYCC_HOME_DIR}
+USER ${CNB_USER_ID}:${CNB_GROUP_ID}
 
 LABEL io.buildpacks.stack.id="${STACK_ID}"
 

@@ -16,4 +16,4 @@ RUN cp -rf /var/lib/dpkg /var/lib/dpkg-run; \
   mv /var/lib/dpkg-run /var/lib/dpkg;
 ADD rootfs /
 
-USER ${DRYCC_UID}
+USER ${CNB_USER_ID}:${CNB_GROUP_ID}
