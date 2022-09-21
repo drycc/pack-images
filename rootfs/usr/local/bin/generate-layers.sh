@@ -29,7 +29,7 @@ ${deps_layer_dir}/lib/$(uname -m)-linux-gnu
 ${deps_layer_dir}/usr/lib
 ${deps_layer_dir}/usr/lib/$(uname -m)-linux-gnu
 EOL
-    sudo ldconfig
+    ldconfig
 }
 
 _create_deps_metadata() {
@@ -64,7 +64,7 @@ generate_base_layer() {
     rm -rf /opt/drycc
     ln -s "${layers_dir}" /opt/drycc
     echo "include ${layers_dir}/*/etc/ld.so.conf.d/*.conf" > /etc/ld.so.conf.d/drycc.conf
-    sudo ldconfig
+    ldconfig
 EOL
     bash "${BASE_LAYER}/profile.d/link.sh"
     cat > "${BASE_LAYER}.toml" <<EOL
