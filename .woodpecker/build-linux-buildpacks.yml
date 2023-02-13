@@ -1,0 +1,41 @@
+matrix:
+  platform:
+    - linux/amd64
+    - linux/arm64
+
+platform: ${platform}
+
+labels:
+  type: exec
+
+pipeline:
+- name: publish-linux
+  image: bash
+  commands:
+  - echo $CONTAINER_PASSWORD | docker login $DRYCC_REGISTRY --username $CONTAINER_USERNAME --password-stdin > /dev/null 2>&1
+  - docker run --rm
+      -v "/usr/local/bin:/tmp/bin"
+      --env CODENAME=$${CODENAME}
+      --env DRYCC_REGISTRY=$DRYCC_REGISTRY
+      --entrypoint init-stack
+      $DRYCC_REGISTRY/drycc/imagebuilder:canary
+      bash -c "cp /opt/drycc/pack/bin/pack /tmp/bin"
+  - sed -i "s/registry.drycc.cc/$${DRYCC_REGISTRY}/g" builder.toml
+  - sed -i "s/{{CODENAME}}/$${CODENAME}/g" builder.toml
+  - export PACK_HOME=$CI_WORKSPACE
+  - make publish-buildpack
+  environment:
+    CODENAME: bullseye
+  secrets:
+  - dev_registry
+  - drycc_registry
+  - container_username
+  - container_password
+  when:
+    event:
+    - push
+    - tag
+
+depends_on:
+- test-linux
+- manifest-pack

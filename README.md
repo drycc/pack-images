@@ -1,6 +1,6 @@
 # Drycc Pack Base Images
 
-[![Build Status](https://drone.drycc.cc/api/badges/drycc/pack-images/status.svg)](https://drone.drycc.cc/drycc/pack-images)
+[![Build Status](https://woodpecker.drycc.cc/api/badges/drycc/pack-images/status.svg)](https://woodpecker.drycc.cc/drycc/pack-images)
 
 This repository is responsible for building and publishing images that builds
 with [Cloud Native Buildpacks'](https://buildpacks.io)

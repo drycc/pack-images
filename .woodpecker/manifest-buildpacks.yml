@@ -1,0 +1,43 @@
+platform: linux/amd64
+
+labels:
+  type: exec
+
+pipeline:
+- name: generate-manifest
+  image: bash
+  commands:
+  - sed -i "s/registry.drycc.cc/$${DRYCC_REGISTRY}/g" .woodpecker/manifest-buildpacks.tmpl
+  - sed -i "s/{{codename}}/bullseye/g" .woodpecker/manifest-buildpacks.tmpl
+  environment:
+    CODENAME: bullseye
+  secrets:
+  - dev_registry
+  - drycc_registry
+  - container_username
+  - container_password
+  when:
+    event:
+    - push
+    - tag
+
+- name: publish-buildpacks-image
+  image: bash
+  commands:
+  - docker run --rm
+    -e PLUGIN_SPEC=.woodpecker/manifest-buildpacks.tmpl
+    -e PLUGIN_USERNAME=$CONTAINER_USERNAME
+    -e PLUGIN_PASSWORD=$CONTAINER_PASSWORD
+    -v $(pwd):$(pwd)
+    -w $(pwd)
+    plugins/manifest
+  secrets:
+  - container_username
+  - container_password
+  when:
+    event:
+    - push
+    - tag
+
+depends_on:
+- build-linux-buildpacks

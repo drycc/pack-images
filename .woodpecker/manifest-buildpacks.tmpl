@@ -1,0 +1,12 @@
+image: registry.drycc.cc/drycc/buildpacks:{{codename}}
+manifests:
+  -
+    image: registry.drycc.cc/drycc/buildpacks:{{codename}}-linux-amd64
+    platform:
+      architecture: amd64
+      os: linux
+  -
+    image: registry.drycc.cc/drycc/buildpacks:{{codename}}-linux-arm64
+    platform:
+      architecture: arm64
+      os: linux

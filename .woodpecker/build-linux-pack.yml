@@ -1,0 +1,28 @@
+matrix:
+  platform:
+    - linux/amd64
+    - linux/arm64
+
+platform: ${platform}
+
+labels:
+  type: exec
+
+pipeline:
+- name: publish-linux
+  image: bash
+  commands:
+  - echo $CONTAINER_PASSWORD | docker login $DRYCC_REGISTRY --username $CONTAINER_USERNAME --password-stdin > /dev/null 2>&1
+  - CODENAME=bullseye make publish-pack
+  secrets:
+  - dev_registry
+  - drycc_registry
+  - container_username
+  - container_password
+  when:
+    event:
+    - push
+    - tag
+
+depends_on:
+- test-linux
