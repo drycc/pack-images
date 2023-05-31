@@ -16,4 +16,7 @@ RUN cp -rf /var/lib/dpkg /var/lib/dpkg-run; \
   mv /var/lib/dpkg-run /var/lib/dpkg;
 ADD rootfs /
 
+ARG PLATFORM_API
+RUN sed -i "s/{{CNB_PLATFORM_API}}/${PLATFORM_API}/g" /usr/local/bin/generate-layers.sh
+
 USER ${CNB_USER_ID}:${CNB_GROUP_ID}

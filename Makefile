@@ -4,7 +4,8 @@ DEV_REGISTRY ?= registry.drycc.cc
 DRYCC_REGISTRY ?= ${DEV_REGISTRY}
 PLATFORM ?= $(shell python3 _scripts/utils.py platform)
 ARCH ?= $(shell python3 _scripts/utils.py arch)
-LIFECYCLE_VERSION ?= v0.15.3
+PLATFORM_API ?= 0.11
+LIFECYCLE_VERSION ?= v0.16.3
 ifeq ($(ARCH),amd64)
 LIFECYCLE_URL = https://github.com/buildpacks/lifecycle/releases/download/$(LIFECYCLE_VERSION)/lifecycle-${LIFECYCLE_VERSION}+linux.x86-64.tgz
 else
@@ -27,6 +28,7 @@ pack:
 	  -t ${STACK_RUN_IMAGE} .
 	@docker build -f Dockerfile.build \
 	  --build-arg BASE_IMAGE=${STACK_RUN_IMAGE} \
+	  --build-arg PLATFORM_API=${PLATFORM_API} \
 	  -t ${STACK_BUILD_IMAGE} .
 
 publish-pack: pack

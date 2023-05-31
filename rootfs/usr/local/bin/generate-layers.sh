@@ -52,6 +52,13 @@ EOL
 
 generate_base_layer() {
     BASE_LAYER="${layers_dir}"/base
+    mkdir -p "${BASE_LAYER}/bin"
+    cat > "${BASE_LAYER}/bin/launcher" <<EOL
+#!/usr/bin/env bash
+export CNB_PLATFORM_API={{CNB_PLATFORM_API}}
+exec tini -g -- /cnb/lifecycle/launcher \$@
+EOL
+    chmod +x "${BASE_LAYER}/bin/launcher"
     mkdir -p "${BASE_LAYER}/deps"
     if [ -e .build-deps ]; then
         cp .build-deps "${BASE_LAYER}/deps"
@@ -61,10 +68,10 @@ generate_base_layer() {
     fi
     mkdir -p "${BASE_LAYER}/profile.d" 
     cat > "${BASE_LAYER}/profile.d/link.sh" <<EOL
-    rm -rf /opt/drycc
-    ln -s "${layers_dir}" /opt/drycc
-    echo "include ${layers_dir}/*/etc/ld.so.conf.d/*.conf" > /etc/ld.so.conf.d/drycc.conf
-    ldconfig
+rm -rf /opt/drycc
+ln -s "${layers_dir}" /opt/drycc
+echo "include ${layers_dir}/*/etc/ld.so.conf.d/*.conf" > /etc/ld.so.conf.d/drycc.conf
+ldconfig
 EOL
     bash "${BASE_LAYER}/profile.d/link.sh"
     cat > "${BASE_LAYER}.toml" <<EOL

@@ -17,8 +17,6 @@ generate_deps_layer run-deps
 
 # 3. install ruby
 generate_stack_layer ruby "${plan_path}" true
-# shellcheck source=/dev/null
-. init-stack
 
 # Compares previous Gemfile.lock checksum to the current Gemfile.lock
 bundler_layer_dir="${layers_dir}/bundler"
@@ -27,6 +25,10 @@ remote_bundler_checksum="not found"
 if [[ -f "${bundler_layer_dir}.toml" ]]; then
   remote_bundler_checksum=$(yj <"${bundler_layer_dir}.toml" -t | jq -r .metadata.version 2>/dev/null || echo 'not found')
 fi
+mkdir -p "${bundler_layer_dir}/profile.d"
+echo "export BUNDLE_APP_CONFIG=${bundler_layer_dir}" > "${bundler_layer_dir}/profile.d/bundle.sh"
+# shellcheck source=/dev/null
+. init-stack
 
 mkdir -p "${bundler_layer_dir}/bin"
 bundle config --local path "${bundler_layer_dir}" >/dev/null
