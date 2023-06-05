@@ -1,46 +1,28 @@
 #!/usr/bin/env bash
 layers_dir=$1
+target_layer_dir=$2
+maven_layer_dir="${layers_dir}/maven"
+mkdir -p "${maven_layer_dir}"
+# maven build
+echo "---> Building target with maven"
+cp -rf "$(pwd)" /tmp/source \
+  && cd /tmp/source \
+  && ln -s "${layers_dir}/maven" "${HOME}/.m2" \
+  && ./mvnw clean install -B -DskipTests \
+  && mv /tmp/source/target "${target_layer_dir}" \
+  && cd -
 
-# 4. MAKE MAVEN M2 CACHE LAYER
-m2_layer_dir="${layers_dir}/maven_m2"
-if [[ ! -d "${m2_layer_dir}" ]]; then
-  mkdir -p "${m2_layer_dir}"
+cat >"${target_layer_dir}/profile.d/target.sh" <<EOL
+# only execute at runtime
+if [ -z "\$INIT_STACK" ]; then
+  rm -rf $(pwd)/target
+  cp -rf ${target_layer_dir}/target $(pwd)
 fi
-cat > "${m2_layer_dir}.toml" << EOF
+EOL
+
+cat >"${maven_layer_dir}.toml" <<EOL
 [types]
 cache = true
-EOF
-ln -s "${m2_layer_dir}" "$HOME/.m2"
-# 5. RUN BUILD
-MAVEN_OPTS="${MAVEN_OPTS:-"-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"}"
-
-if [[ -x mvnw ]]; then
-  echo "---> Running Maven Wrapper"
-  ./mvnw clean install -B -DskipTests
-else
-  maven_url="https://apache.org/dist/maven/maven-3/3.5.4/binaries/apache-maven-3.5.4-bin.tar.gz"
-  maven_version="3.5.4"
-  maven_layer_dir="${layers_dir}/maven"
-  if [[ -f "${layers_dir}/maven.toml" ]]; then
-    cached_maven_url=$(cat "${maven_layer_dir}.toml" | yj -t | jq -r .metadata.url 2>/dev/null || echo 'Maven TOML parsing failed')
-  fi
-  if [[ "${maven_url}" != "${cached_maven_url}" ]] ; then
-    echo "---> Installing Maven"
-    rm -rf "${maven_layer_dir}"
-    mkdir -p "${maven_layer_dir}"
-    wget -q -O - "${maven_url}" | tar pxz -C "${maven_layer_dir}" --strip-components=1
-  fi
-  cat > "${maven_layer_dir}.toml" << EOF
-[types]
-launch = true
 build = true
-cache = true
-[metadata]
-version = "${maven_version}"
-url = "${maven_url}"
-EOF
-  export PATH="${layers_dir}/maven/bin:${PATH}"
-  echo "---> Running Maven Wrapper"
-  mvn clean install -B -DskipTests
-fi
-
+launch = false
+EOL

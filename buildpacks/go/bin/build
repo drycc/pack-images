@@ -17,36 +17,29 @@ generate_deps_layer run-deps
 
 # 2. DOWNLOAD go
 generate_stack_layer go "${plan_path}" false
-go_cache_layer_dir="${layers_dir}/go_cache"
-
 # shellcheck source=/dev/null
 . init-stack
 
-# Compares previous go.mod checksum to the current go.mod
-local_mod_checksum=$(sha256sum go.mod | cut -d ' ' -f 1 || echo 'not found')
-remote_mod_checksum='not found'
-if [[ -f "${go_cache_layer_dir}.toml" ]]; then
-  remote_mod_checksum=$(yj <"${go_cache_layer_dir}.toml" -t | jq -r .metadata 2>/dev/null || echo 'not found')
-fi
-mkdir -p "${go_cache_layer_dir}"
+# 3 build target
+target_layer_dir="${layers_dir}"/target
+mkdir -p "${target_layer_dir}"/{bin,profile.d}
+echo "---> Start building ${DRYCC_APP} version"
 
-if [[ -f go.mod && "${local_mod_checksum}" == "${remote_mod_checksum}" ]]; then
-  echo "---> Reusing go.mod"
-else
-  echo "---> Installing go.mod with go mod vendor"
-  rm "${go_cache_layer_dir}/pkg" -rf
-  go mod download
-fi
-cat >"${go_cache_layer_dir}.toml" <<EOL
+cp -rf "$(pwd)" "${target_layer_dir}"/source \
+  && cd "${target_layer_dir}"/source \
+  && go mod vendor \
+  && go build -o "${target_layer_dir}/bin/${DRYCC_APP}" -v . \
+  && cd - \
+  && rm -rf "${target_layer_dir}"/source
+
+cat >"${target_layer_dir}.toml" <<EOL
 [types]
 cache = true
 build = true
-launch = false
-
-[metadata]
-version = "${local_mod_checksum}"
+launch = true
+EOL
+cat >"${target_layer_dir}/profile.d/target.sh" <<EOL
+export PATH="${target_layer_dir}/bin:${PATH}"
 EOL
 
-go mod vendor
-go build -o main -v .
 generate-launch.sh "${layers_dir}"

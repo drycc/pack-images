@@ -1,19 +1,28 @@
 #!/usr/bin/env bash
 layers_dir=$1
-
+target_layer_dir=$2
 gradle_layer_dir="${layers_dir}/gradle"
+mkdir -p "${gradle_layer_dir}"
+export GRADLE_USER_HOME="${gradle_layer_dir}"
+# gradle build
+echo "---> Building target with gradle"
+cp -rf "$(pwd)" /tmp/source \
+  && cd /tmp/source \
+  && ./gradlew clean build -x test --no-daemon \
+  && mv /tmp/source/build "${target_layer_dir}" \
+  && cd -
 
-if [[ ! -d ${gradle_layer_dir} ]]; then
-  mkdir -p ${gradle_layer_dir}
+cat >"${target_layer_dir}/profile.d/target.sh" <<EOL
+# only execute at runtime
+if [ -z "\$INIT_STACK" ]; then
+  rm -rf $(pwd)/build
+  cp -rf ${target_layer_dir}/build $(pwd)
 fi
-cat > "${gradle_layer_dir}.toml" << EOF
+EOL
+
+cat >"${gradle_layer_dir}.toml" <<EOL
 [types]
 cache = true
-EOF
-ln -s ${gradle_layer_dir} $HOME/.gradle
-
-# 5. RUN BUILD
-echo "---> Running Gradle Wrapper"
-./gradlew clean build -x test --no-daemon
-
-
+build = true
+launch = false
+EOL

@@ -24,7 +24,7 @@ generate_stack_layer node "${plan_path}" true
 
 # 4. install node modules
 node_modules_layer_dir="${layers_dir}/node_modules"
-mkdir -p "${node_modules_layer_dir}"
+mkdir -p "${node_modules_layer_dir}"/profile.d
 # Compares previous package.json checksum to the current package.json
 local_package_checksum=$(sha256sum package.json | cut -d ' ' -f 1 || echo 'not found')
 remote_package_checksum='not found'
@@ -34,14 +34,11 @@ fi
 
 if [[ -f package.json && "${local_package_checksum}" == "${remote_package_checksum}" ]]; then
   echo "---> Reusing package.json"
-  cp -r "${node_modules_layer_dir}"/* ./node_modules/
 elif [[ -f package.json ]]; then
   echo "---> Installing package.json with npm install."
-  rm "${node_modules_layer_dir}" -rf
-  npm install
-  cp -r ./node_modules "${node_modules_layer_dir}"
-fi
-cat >"${node_modules_layer_dir}.toml" <<EOL
+  cp package.json "${node_modules_layer_dir}"
+  cd "${node_modules_layer_dir}" && npm install && cd -
+  cat >"${node_modules_layer_dir}.toml" <<EOL
 [types]
 cache = true
 build = true
@@ -50,6 +47,13 @@ launch = true
 [metadata]
 version = "${local_package_checksum}"
 EOL
+  cat >"${node_modules_layer_dir}"/profile.d/copy_node_modules.sh <<EOL
+# only execute at runtime
+if [ -z "\$INIT_STACK" ]; then
+  cp -rf ${node_modules_layer_dir}/node_modules $(pwd)
+fi
+EOL
+fi
 
 json_get_key() {
   local file="$1"

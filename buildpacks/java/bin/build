@@ -27,20 +27,30 @@ bp_dir=$(
 )
 
 build_choice="maven"
-if [ -f pom.xml ] && [ -f gradlew ]; then
+if [ -f mvnw ] && [ -f gradlew ]; then
   if [[ -f .build-choice ]]; then
     build_choice=$(tr <.build-choice -d '[:space:]')
   fi
-elif [ -f pom.xml ] && [ ! -f gradlew ]; then
+elif [ -f mvnw ]; then
   build_choice="maven"
-elif [ -f gradlew ] && [ ! -f pom.xml ]; then
+elif [ -f gradlew ]; then
   build_choice="gradle"
 fi
 
+target_layer_dir="${layers_dir}/target"
+mkdir -p "${target_layer_dir}"/profile.d
+
 if [ "${build_choice}" == "maven" ]; then
-  "$bp_dir/lib/maven_build" "${layers_dir}"
+  "$bp_dir/lib/maven_build" "${layers_dir}" "${target_layer_dir}"
 elif [ "${build_choice}" == "gradle" ]; then
-  "$bp_dir/lib/gradle_build" "${layers_dir}"
+  "$bp_dir/lib/gradle_build" "${layers_dir}" "${target_layer_dir}"
 fi
+
+cat >"${target_layer_dir}.toml" <<EOL
+[types]
+cache = false
+build = true
+launch = true
+EOL
 
 generate-launch.sh "${layers_dir}"

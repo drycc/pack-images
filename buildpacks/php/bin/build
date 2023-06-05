@@ -69,29 +69,29 @@ version = "${local_extensions_checksum}"
 EOL
 
 # Compares previous composer.json checksum to the current composer.json
-vendor_layer_dir="${layers_dir}/vendor"
-mkdir -p "${vendor_layer_dir}"
+composer_layer_dir="${layers_dir}"/composer
+mkdir -p "${composer_layer_dir}"/{vendor,profile.d}
 local_composer_checksum=$(sha256sum composer.json | cut -d ' ' -f 1 || echo 'not found')
 remote_composer_checksum="not found"
-if [[ -f "${vendor_layer_dir}.toml" ]]; then
-  remote_composer_checksum=$(yj <"${vendor_layer_dir}.toml" -t | jq -r .metadata.version 2>/dev/null || echo 'not found')
+if [[ -f "${composer_layer_dir}.toml" ]]; then
+  remote_composer_checksum=$(yj <"${composer_layer_dir}.toml" -t | jq -r .metadata.version 2>/dev/null || echo 'not found')
 fi
+cat >"${composer_layer_dir}/profile.d/composer.sh" <<EOL
+export COMPOSER_HOME=${composer_layer_dir}
+export COMPOSER_VENDOR_DIR=${composer_layer_dir}/vendor
+echo "include_path=.:${composer_layer_dir}" >> "${php_layer_dir}/config/php.ini"
+EOL
+# shellcheck source=/dev/null
+. init-stack
 
-composer config --no-plugins vendor-dir
 composer config --no-plugins bin-dir
-
+composer config --no-plugins vendor-dir
 if [[ -f composer.json && "${local_composer_checksum}" == "${remote_composer_checksum}" ]]; then
   echo "---> Reusing composer.json"
-  cp -r "${vendor_layer_dir}" "./vendor"
 else
   echo "---> Installing composer.json"
-  composer install --ignore-platform-reqs
-  if [[ -d "${vendor_layer_dir}" ]]; then
-    rm "${vendor_layer_dir:?}/*" -rf
-    cp -r vendor/. "${vendor_layer_dir}/"
-  fi
-fi
-cat >"${vendor_layer_dir}.toml" <<EOL
+  composer install
+  cat >"${composer_layer_dir}.toml" <<EOL
 [types]
 cache = true
 build = true
@@ -100,6 +100,7 @@ launch = true
 [metadata]
 version = "${local_composer_checksum}"
 EOL
+fi
 
 echo "---> Config nginx"
 nginx_layer_dir="${layers_dir}/nginx"

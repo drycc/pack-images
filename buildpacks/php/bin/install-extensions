@@ -23,16 +23,16 @@ pecl_extension_install() {
 
 urls_extension_install() {
   ext_url=${1:1:-1}
-  ext_tar=$(echo "${ext_url}" | awk -F "/" '{print $NF}')
-  ext=$(echo "${ext_tar}" | awk -F "-" '{print $1}')
+  ext_tmp="${php_layer_dir}"/tmp
+  ext_tar=/tmp/$(echo "${ext_url}" | awk -F "/" '{print $NF}')
+  ext=$(echo "${ext_tar}" | awk -F "-" '{print $1}' | awk -F "\/" '{print $3}')
   echo "---> Installing extension ${ext_url}"
   curl -fsSL "${ext_url}" -o "${ext_tar}" &&
-    mkdir -p /tmp/"${ext}" &&
-    tar -xf "${ext_tar}" -C /tmp/"${ext}" --strip-components=1 &&
-    rm "${ext_tar}" &&
-    php-ext-configure /tmp/"${ext}" --enable-"${ext}" --with-php-config="${php_layer_dir}"/bin/php-config &&
-    INSTALL_ROOT="${php_layer_dir}" php-ext-install --ini-name "${php_layer_dir}"/config/php.ini /tmp/"${ext}" &&
-    rm -r /tmp/"${ext}"
+    mkdir -p "${ext_tmp}" &&
+    tar -xf "${ext_tar}" -C "${ext_tmp}" --strip-components=1 &&
+    php-ext-configure "${ext_tmp}" --enable-"${ext}" --with-php-config="${php_layer_dir}"/bin/php-config &&
+    INSTALL_ROOT="${php_layer_dir}" php-ext-install --ini-name "${php_layer_dir}"/config/php.ini "${ext_tmp}" &&
+    rm -rf "${ext_tar}" "${ext_tmp}"
 }
 
 main() {
