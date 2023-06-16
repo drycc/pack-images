@@ -7,16 +7,7 @@ set -e
 : ${LDFLAGS:=$PHP_LDFLAGS}
 export CFLAGS CPPFLAGS LDFLAGS
 
-srcExists=
-if [ -d "${php_layer_dir}"/src/php ]; then
-	srcExists=1
-fi
-php-source extract
-if [ -z "$srcExists" ]; then
-	touch "${php_layer_dir}"/src/.delete-me
-fi
-
-cd "${php_layer_dir}"/src/php/ext
+cd "${php_layer_dir}"/src/ext
 
 usage() {
 	echo "usage: $0 ext-name [configure flags]"

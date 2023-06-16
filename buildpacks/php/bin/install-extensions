@@ -15,7 +15,7 @@ pecl_extension_install() {
   echo "---> Installing extension ${ext}"
   # shellcheck disable=SC2154
   if [ ! -e "${php_layer_dir}/ext/${ext}.so" ]; then
-    pecl install xdebug
+    pecl install "${ext}"
     ext_name=$(echo "${ext}" | awk -F "-" '{print $1}')
     php-ext-enable --ini-name "${php_layer_dir}"/config/php.ini "${ext_name}"
   fi
@@ -30,7 +30,7 @@ urls_extension_install() {
   curl -fsSL "${ext_url}" -o "${ext_tar}" &&
     mkdir -p "${ext_tmp}" &&
     tar -xf "${ext_tar}" -C "${ext_tmp}" --strip-components=1 &&
-    php-ext-configure "${ext_tmp}" --enable-"${ext}" --with-php-config="${php_layer_dir}"/bin/php-config &&
+    php-ext-configure "${ext_tmp}" --with-php-config="${php_layer_dir}"/bin/php-config &&
     INSTALL_ROOT="${php_layer_dir}" php-ext-install --ini-name "${php_layer_dir}"/config/php.ini "${ext_tmp}" &&
     rm -rf "${ext_tar}" "${ext_tmp}"
 }

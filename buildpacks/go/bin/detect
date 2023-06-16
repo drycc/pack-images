@@ -10,7 +10,7 @@ fi
 plan_path=$2
 
 # 3. GET CONFIGURATION
-version=1.17
+version=1.20
 if [[ -f go.mod ]]; then
     version=$(grep <go.mod 'go [1.*]' | tr -d 'go ')
 fi

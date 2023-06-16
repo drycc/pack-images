@@ -5,7 +5,7 @@ USER root
 RUN cp -rf /var/lib/dpkg /var/lib/dpkg-run; \
   \
   \
-  install-packages zlib1g git autoconf pkg-config build-essential zip unzip; \
+  install-packages zlib1g git autoconf pkg-config build-essential zip unzip file; \
   install-stack jq 1.6; \
   install-stack yj 5.1.0; \
   cp -rf /opt/drycc/*/bin/* /usr/local/bin; \

@@ -10,12 +10,12 @@ fi
 plan_path=$2
 
 # 3. GET CONFIGURATION
-php_version=8.1
+php_version=8.2
 if [[ -f .php-version ]]; then
     php_version=$(tr <.php-version -d '[:space:]')
 fi
 
-nginx_version=1.21.6
+nginx_version=1.25.1
 if [[ -f .nginx-version ]]; then
     nginx_version=$(tr <.nginx-version -d '[:space:]')
 fi
