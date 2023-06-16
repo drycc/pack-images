@@ -25,7 +25,7 @@ pipeline:
   - export PACK_HOME=$CI_WORKSPACE
   - make publish-buildpack
   environment:
-    CODENAME: bullseye
+    CODENAME: bookworm
   secrets:
   - dev_registry
   - drycc_registry

@@ -31,7 +31,8 @@ dpkg-install() {
     if [[ ! -f "${DEB_FILE}" ]] ; then
         curl -fsSL -o "${DEB_FILE}" "${DEB_URL}"
     fi
-    readonly control_dir=$(mktemp -d)
+    control_dir=$(mktemp -d)
+    readonly control_dir
     dpkg -e "${DEB_FILE}" "${control_dir}"
     if [[ -f "${control_dir}"/preinst ]] ; then
         sed -i "s#/usr/lib/#$APT_INSTALL_DIR/usr/lib/#g" "${control_dir}"/preinst

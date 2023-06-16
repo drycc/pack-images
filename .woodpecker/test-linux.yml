@@ -14,7 +14,7 @@ pipeline:
   commands:
   - CODENAME=$${CODENAME} make test-style
   environment:
-    CODENAME: bullseye
+    CODENAME: bookworm
   secrets:
   - dev_registry
   - codecov_token

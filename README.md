@@ -6,14 +6,14 @@ This repository is responsible for building and publishing images that builds
 with [Cloud Native Buildpacks'](https://buildpacks.io)
 [`pack`](https://github.com/buildpacks/pack) command.
 
-* [drycc/pack:bullseye](https://hub.docker.com/r/drycc/pack/tags/) - A CNB
-  compatible run image based on drycc/pack:bullseye
-* [drycc/pack:bullseye-build](https://hub.docker.com/r/drycc/pack/tags/) - A CNB
-  compatible build image based on drycc/pack:bullseye-build
+* [drycc/pack:bookworm](https://hub.docker.com/r/drycc/pack/tags/) - A CNB
+  compatible run image based on drycc/pack:bookworm
+* [drycc/pack:bookworm-build](https://hub.docker.com/r/drycc/pack/tags/) - A CNB
+  compatible build image based on drycc/pack:bookworm-build
 
 ## Usage
 
-`pack build myapp --builder drycc/buildpacks:bullseye`
+`pack build myapp --builder drycc/buildpacks:bookworm`
 
 ## System
 
@@ -21,21 +21,21 @@ The basic image is based on Debian system, See the table below for system descri
 
 STACK ID        | Buildpacks image                            | Operating System
 ----------------|---------------------------------------------|---------------------------------
-drycc-bullseye  | registry.drycc.cc/drycc/buildpacks:bullseye | Debian 11 Bullseye 
+drycc-bookworm  | registry.drycc.cc/drycc/buildpacks:bookworm | Debian 11 bookworm 
 
 The basic layer of buildpack supports custom software sources and custom software.
 For example, if we use alicloud to install libpq-dev, we can add `.deb-list` and `·source-list` files to the project.
 
 ```
 cat > ".source-list" <<EOL
-deb http://mirrors.cloud.aliyuncs.com/debian/ bullseye main non-free contrib
-deb-src http://mirrors.cloud.aliyuncs.com/debian/ bullseye main non-free contrib
-deb http://mirrors.cloud.aliyuncs.com/debian-security bullseye/updates main
-deb-src http://mirrors.cloud.aliyuncs.com/debian-security bullseye/updates main
-deb http://mirrors.cloud.aliyuncs.com/debian/ bullseye-updates main non-free contrib
-deb-src http://mirrors.cloud.aliyuncs.com/debian/ bullseye-updates main non-free contrib
-deb http://mirrors.cloud.aliyuncs.com/debian/ bullseye-backports main non-free contrib
-deb-src http://mirrors.cloud.aliyuncs.com/debian/ bullseye-backports main non-free contrib
+deb http://mirrors.cloud.aliyuncs.com/debian/ bookworm main non-free contrib
+deb-src http://mirrors.cloud.aliyuncs.com/debian/ bookworm main non-free contrib
+deb http://mirrors.cloud.aliyuncs.com/debian-security bookworm/updates main
+deb-src http://mirrors.cloud.aliyuncs.com/debian-security bookworm/updates main
+deb http://mirrors.cloud.aliyuncs.com/debian/ bookworm-updates main non-free contrib
+deb-src http://mirrors.cloud.aliyuncs.com/debian/ bookworm-updates main non-free contrib
+deb http://mirrors.cloud.aliyuncs.com/debian/ bookworm-backports main non-free contrib
+deb-src http://mirrors.cloud.aliyuncs.com/debian/ bookworm-backports main non-free contrib
 EOL
 
 cat > ".deb-list" <<EOL

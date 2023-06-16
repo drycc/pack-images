@@ -13,7 +13,7 @@ pipeline:
   image: bash
   commands:
   - echo $CONTAINER_PASSWORD | docker login $DRYCC_REGISTRY --username $CONTAINER_USERNAME --password-stdin > /dev/null 2>&1
-  - CODENAME=bullseye make publish-pack
+  - CODENAME=bookworm make publish-pack
   secrets:
   - dev_registry
   - drycc_registry

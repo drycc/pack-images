@@ -10,4 +10,4 @@ homepage = "https://github.com/drycc/pack-images/tree/main/buildpacks/ruby"
 
 # Stacks that the buildpack will work with
 [[stacks]]
-id = "drycc-bullseye"
+id = "drycc-bookworm"
