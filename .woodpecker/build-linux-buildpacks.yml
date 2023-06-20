@@ -24,9 +24,8 @@ pipeline:
   - sed -i "s/{{CODENAME}}/$${CODENAME}/g" builder.toml
   - export PACK_HOME=$CI_WORKSPACE
   - make publish-buildpack
-  environment:
-    CODENAME: bookworm
   secrets:
+  - codename
   - dev_registry
   - drycc_registry
   - container_username

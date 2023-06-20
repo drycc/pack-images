@@ -1,5 +1,4 @@
 # If DRYCC_REGISTRY is not set, try to populate it from legacy DEV_REGISTRY
-CODENAME ?= bookworm
 DEV_REGISTRY ?= registry.drycc.cc
 DRYCC_REGISTRY ?= ${DEV_REGISTRY}
 PLATFORM ?= $(shell python3 _scripts/utils.py platform)
@@ -36,9 +35,16 @@ publish-pack: pack
 	@docker push ${STACK_BUILD_IMAGE}
 
 buildpack:
+	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/go/buildpack.tmpl buildpacks/go/buildpack.toml
+	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/java/buildpack.tmpl buildpacks/java/buildpack.toml
+	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/node/buildpack.tmpl buildpacks/node/buildpack.toml
+	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/php/buildpack.tmpl buildpacks/php/buildpack.toml
+	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/python/buildpack.tmpl buildpacks/python/buildpack.toml
+	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/ruby/buildpack.tmpl buildpacks/ruby/buildpack.toml
+	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/rust/buildpack.tmpl buildpacks/rust/buildpack.toml
 	STACK_ID=${STACK_ID} LIFECYCLE_URL=${LIFECYCLE_URL} STACK_RUN_IMAGE=${STACK_RUN_IMAGE} STACK_BUILD_IMAGE=${STACK_BUILD_IMAGE} python3 _scripts/utils.py toml builder.toml builder.toml.${PLATFORM}.${ARCH}
 	@pack builder create ${BUILDPACKS_IMAGE} --config builder.toml.${PLATFORM}.${ARCH} --pull-policy if-not-present
-	@rm -rf builder.toml.${PLATFORM}.${ARCH}
+	@rm -rf builder.toml.${PLATFORM}.${ARCH} buildpacks/*/buildpack.toml
 
 publish-buildpack: buildpack
 	@docker push ${BUILDPACKS_IMAGE}

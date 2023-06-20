@@ -12,10 +12,9 @@ pipeline:
 - name: test-linux
   image: bash
   commands:
-  - CODENAME=$${CODENAME} make test-style
-  environment:
-    CODENAME: bookworm
+  - make test-style
   secrets:
+  - codename
   - dev_registry
   - codecov_token
   - drycc_registry

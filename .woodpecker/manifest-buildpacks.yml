@@ -8,10 +8,9 @@ pipeline:
   image: bash
   commands:
   - sed -i "s/registry.drycc.cc/$${DRYCC_REGISTRY}/g" .woodpecker/manifest-buildpacks.tmpl
-  - sed -i "s/{{codename}}/bookworm/g" .woodpecker/manifest-buildpacks.tmpl
-  environment:
-    CODENAME: bookworm
+  - sed -i "s/{{codename}}/$${CODENAME}/g" .woodpecker/manifest-buildpacks.tmpl
   secrets:
+  - codename
   - dev_registry
   - drycc_registry
   - container_username

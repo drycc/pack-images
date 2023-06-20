@@ -11,9 +11,8 @@ pipeline:
   - sed -i "s/registry.drycc.cc/$${DRYCC_REGISTRY}/g" .woodpecker/manifest-build.tmpl
   - sed -i "s/{{codename}}/$${CODENAME}/g" .woodpecker/manifest-run.tmpl
   - sed -i "s/{{codename}}/$${CODENAME}/g" .woodpecker/manifest-build.tmpl
-  environment:
-    CODENAME: bookworm
   secrets:
+  - codename
   - dev_registry
   - drycc_registry
   - container_username
