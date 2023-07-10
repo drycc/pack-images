@@ -8,7 +8,7 @@ echo "---> Building target with maven"
 cp -rf "$(pwd)" /tmp/source \
   && cd /tmp/source \
   && ln -s "${layers_dir}/maven" "${HOME}/.m2" \
-  && ./mvnw clean install -B -DskipTests \
+  && bash mvnw clean install -B -DskipTests \
   && mv /tmp/source/target "${target_layer_dir}" \
   && cd -
 
