@@ -6,9 +6,9 @@ This repository is responsible for building and publishing images that builds
 with [Cloud Native Buildpacks'](https://buildpacks.io)
 [`pack`](https://github.com/buildpacks/pack) command.
 
-* [drycc/pack:$codename](https://hub.docker.com/r/drycc/pack/tags/) - A CNB
+* [drycc/pack:$codename](https://registry.drycc.cc) - A CNB
   compatible run image based on drycc/pack:$codename
-* [drycc/pack:$codename-build](https://hub.docker.com/r/drycc/pack/tags/) - A CNB
+* [drycc/pack:$codename-build](https://registry.drycc.cc) - A CNB
   compatible build image based on drycc/pack:$codename-build
 
 ## Usage

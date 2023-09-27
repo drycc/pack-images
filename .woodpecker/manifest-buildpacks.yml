@@ -23,7 +23,7 @@ pipeline:
 - name: publish-buildpacks-image
   image: bash
   commands:
-  - docker run --rm
+  - podman run --rm
     -e PLUGIN_SPEC=.woodpecker/manifest-buildpacks.tmpl
     -e PLUGIN_USERNAME=$CONTAINER_USERNAME
     -e PLUGIN_PASSWORD=$CONTAINER_PASSWORD

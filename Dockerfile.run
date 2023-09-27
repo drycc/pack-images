@@ -10,7 +10,7 @@ ENV CNB_APP_DIR /workspace
 
 RUN groupadd drycc --gid ${CNB_USER_ID} \
   && useradd drycc -u ${CNB_USER_ID} -g ${CNB_GROUP_ID} -s /bin/bash -m \
-  && chown -R ${CNB_USER_ID}:${CNB_GROUP_ID} /opt /etc
+  && chown -hR ${CNB_USER_ID}:${CNB_GROUP_ID} /opt /etc
 
 USER ${CNB_USER_ID}:${CNB_GROUP_ID}
 
