@@ -1,7 +1,7 @@
 description = "Base builder for drycc stack, based on debian base image"
 
 [lifecycle]
-uri = "{LIFECYCLE_URL}"
+version = "{LIFECYCLE_VERSION}"
 
 [[buildpacks]]
   id = "drycc/ruby"
