@@ -24,22 +24,26 @@ STACK ID        | Buildpacks image                              | Operating Syst
 drycc-$codename  | registry.drycc.cc/drycc/buildpacks:$codename | Debian $version $codename 
 
 The basic layer of buildpack supports custom software sources and custom software.
-For example, if we use alicloud to install libpq-dev, we can add `.deb-list` and `·source-list` files to the project.
+For example, we can add `.deb-list`, `·source-list` and `.build-env` files to the project.
 
 ```
-cat > ".source-list" <<EOL
-deb http://mirrors.cloud.aliyuncs.com/debian/ $codename main non-free contrib
-deb-src http://mirrors.cloud.aliyuncs.com/debian/ $codename main non-free contrib
-deb http://mirrors.cloud.aliyuncs.com/debian-security $codename/updates main
-deb-src http://mirrors.cloud.aliyuncs.com/debian-security $codename/updates main
-deb http://mirrors.cloud.aliyuncs.com/debian/ $codename-updates main non-free contrib
-deb-src http://mirrors.cloud.aliyuncs.com/debian/ $codename-updates main non-free contrib
-deb http://mirrors.cloud.aliyuncs.com/debian/ $codename-backports main non-free contrib
-deb-src http://mirrors.cloud.aliyuncs.com/debian/ $codename-backports main non-free contrib
+cat > ".sources-list" <<EOL
+deb http://mirrors.cloud.aliyuncs.com/debian/ bookworm main non-free contrib
+deb-src http://mirrors.cloud.aliyuncs.com/debian/ bookworm main non-free contrib
+deb http://mirrors.cloud.aliyuncs.com/debian-security bookworm/updates main
+deb-src http://mirrors.cloud.aliyuncs.com/debian-security bookworm/updates main
+deb http://mirrors.cloud.aliyuncs.com/debian/ bookworm-updates main non-free contrib
+deb-src http://mirrors.cloud.aliyuncs.com/debian/ bookworm-updates main non-free contrib
+deb http://mirrors.cloud.aliyuncs.com/debian/ bookworm-backports main non-free contrib
+deb-src http://mirrors.cloud.aliyuncs.com/debian/ bookworm-backports main non-free contrib
 EOL
 
 cat > ".deb-list" <<EOL
 libpq-dev
+EOL
+
+cat > ".build-env" <<EOL
+PIP_INDEX_URL=https://mirrors.cloud.tencent.com/pypi/simple/
 EOL
 ```
 
