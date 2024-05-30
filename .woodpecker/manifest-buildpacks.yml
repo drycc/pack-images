@@ -18,6 +18,7 @@ steps:
     event:
     - push
     - tag
+    - cron
 
 - name: publish-buildpacks-image
   image: bash
@@ -37,6 +38,7 @@ steps:
     event:
     - push
     - tag
+    - cron
 
 depends_on:
 - build-linux-buildpacks

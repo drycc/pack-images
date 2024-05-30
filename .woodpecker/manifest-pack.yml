@@ -16,6 +16,11 @@ steps:
   - drycc_registry
   - container_username
   - container_password
+  when:
+    event:
+    - push
+    - tag
+    - cron
 
 - name: publish-run-image
   image: bash
@@ -35,6 +40,7 @@ steps:
     event:
     - push
     - tag
+    - cron
 
 - name: publish-build-image
   image: bash
@@ -54,6 +60,7 @@ steps:
     event:
     - push
     - tag
+    - cron
 
 depends_on:
 - build-linux-pack
