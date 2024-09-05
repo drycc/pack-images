@@ -3,8 +3,9 @@ DEV_REGISTRY ?= registry.drycc.cc
 DRYCC_REGISTRY ?= ${DEV_REGISTRY}
 PLATFORM ?= $(shell python3 _scripts/utils.py platform)
 ARCH ?= $(shell python3 _scripts/utils.py arch)
-PLATFORM_API ?= 0.12
-LIFECYCLE_VERSION ?= v0.17.2
+PLATFORM_API ?= 0.14
+BUILDPACK_API ?= 0.11
+LIFECYCLE_VERSION ?= v0.20.1
 STACK_ID = drycc-${CODENAME}
 STACK_RUN_IMAGE = ${DRYCC_REGISTRY}/drycc/pack:${CODENAME}-${PLATFORM}-${ARCH}
 STACK_BUILD_IMAGE = ${DRYCC_REGISTRY}/drycc/pack:${CODENAME}-${PLATFORM}-${ARCH}-build
@@ -30,13 +31,13 @@ publish-pack: pack
 	@podman push ${STACK_BUILD_IMAGE}
 
 buildpack:
-	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/go/buildpack.tmpl buildpacks/go/buildpack.toml
-	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/java/buildpack.tmpl buildpacks/java/buildpack.toml
-	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/node/buildpack.tmpl buildpacks/node/buildpack.toml
-	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/php/buildpack.tmpl buildpacks/php/buildpack.toml
-	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/python/buildpack.tmpl buildpacks/python/buildpack.toml
-	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/ruby/buildpack.tmpl buildpacks/ruby/buildpack.toml
-	STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/rust/buildpack.tmpl buildpacks/rust/buildpack.toml
+	BUILDPACK_API=${BUILDPACK_API} STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/go/buildpack.tmpl buildpacks/go/buildpack.toml
+	BUILDPACK_API=${BUILDPACK_API} STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/java/buildpack.tmpl buildpacks/java/buildpack.toml
+	BUILDPACK_API=${BUILDPACK_API} STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/node/buildpack.tmpl buildpacks/node/buildpack.toml
+	BUILDPACK_API=${BUILDPACK_API} STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/php/buildpack.tmpl buildpacks/php/buildpack.toml
+	BUILDPACK_API=${BUILDPACK_API} STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/python/buildpack.tmpl buildpacks/python/buildpack.toml
+	BUILDPACK_API=${BUILDPACK_API} STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/ruby/buildpack.tmpl buildpacks/ruby/buildpack.toml
+	BUILDPACK_API=${BUILDPACK_API} STACK_ID=${STACK_ID} python3 _scripts/utils.py toml buildpacks/rust/buildpack.tmpl buildpacks/rust/buildpack.toml
 	STACK_ID=${STACK_ID} LIFECYCLE_VERSION=${LIFECYCLE_VERSION} STACK_RUN_IMAGE=${STACK_RUN_IMAGE} STACK_BUILD_IMAGE=${STACK_BUILD_IMAGE} \
 	    python3 _scripts/utils.py toml builder.toml builder.toml.${PLATFORM}.${ARCH}
 	DOCKER_HOST=unix://$(shell podman info -f "{{.Host.RemoteSocket.Path}}") \
