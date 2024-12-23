@@ -12,11 +12,15 @@ steps:
   image: bash
   commands:
   - make test-style
-  secrets:
-  - codename
-  - dev_registry
-  - codecov_token
-  - drycc_registry
+  environment:
+    DEV_REGISTRY:
+      from_secret: dev_registry
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+    CONTAINER_USERNAME:
+      from_secret: container_username
+    CONTAINER_PASSWORD:
+      from_secret: container_password
   when:
     event:
     - push

@@ -8,12 +8,17 @@ steps:
   commands:
   - sed -i "s/registry.drycc.cc/$${DRYCC_REGISTRY}/g" .woodpecker/manifest-buildpacks.tmpl
   - sed -i "s/{{codename}}/$${CODENAME}/g" .woodpecker/manifest-buildpacks.tmpl
-  secrets:
-  - codename
-  - dev_registry
-  - drycc_registry
-  - container_username
-  - container_password
+  environment:
+    CODENAME:
+      from_secret: codename
+    DEV_REGISTRY:
+      from_secret: dev_registry
+    DRYCC_REGISTRY:
+      from_secret: drycc_registry
+    CONTAINER_USERNAME:
+      from_secret: container_username
+    CONTAINER_PASSWORD:
+      from_secret: container_password
   when:
     event:
     - push
@@ -31,9 +36,11 @@ steps:
     -v $(pwd):$(pwd)
     -w $(pwd)
     plugins/manifest
-  secrets:
-  - container_username
-  - container_password
+  environment:
+    CONTAINER_USERNAME:
+      from_secret: container_username
+    CONTAINER_PASSWORD:
+      from_secret: container_password
   when:
     event:
     - push
